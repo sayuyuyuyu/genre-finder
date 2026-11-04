@@ -1,0 +1,450 @@
+/**
+ * ジャンル判定エンジン本体。
+ * iTunes / Deezer / MusicBrainz（+ 任意で Last.fm）から証拠を集め、
+ * タクソノミーで正規化して重み付きの信頼度を出す。
+ */
+
+import type {
+  ConfidenceLevel,
+  GenreEvidence,
+  GenreJudgment,
+  GenreScore,
+  SourceName,
+  TrackCandidate,
+} from '../../shared/types';
+import { SOURCE_LABELS } from '../../shared/types';
+import { containsJapanese, normalize, normalizeText } from '../../shared/genre/normalize';
+import {
+  aggregateGenres,
+  confidenceLevel,
+  DEEZER_WEIGHT,
+  ITUNES_WEIGHT,
+  lastfmWeight,
+  musicbrainzArtistWeight,
+  musicbrainzRecordingWeight,
+} from '../../shared/genre/score';
+import { getGenre, relatedGenres } from '../../shared/genre/taxonomy';
+import { buildSearchTerm, chooseStorefront, scoreMatch } from '../../shared/genre/title';
+import { deezerAlbum, deezerSearchTracks, deezerTrack, type DeezerAlbum, type DeezerTrack } from './deezer';
+import { envValue, type Env } from './env';
+import { toErrorMessage } from './http';
+import { itunesLookup, itunesSearch, type ItunesTrack } from './itunes';
+import { lastfmTopTags } from './lastfm';
+import { mbArtistGenres, mbRecordingTags, mbSearchRecording, type MbRecordingMatch, type MbTag } from './musicbrainz';
+import { deezerToCandidate, itunesToCandidate } from './candidates';
+
+export interface AnalyzeInput {
+  title: string;
+  artist?: string;
+  itunesId?: string;
+  deezerId?: string;
+}
+
+export interface AnalyzeOutcome {
+  judgment: GenreJudgment;
+  warnings: string[];
+}
+
+interface ItunesData {
+  track: ItunesTrack | null;
+  score: number;
+}
+
+interface DeezerData {
+  track: DeezerTrack | null;
+  album: DeezerAlbum | null;
+  genres: string[];
+  score: number;
+}
+
+interface MusicBrainzData {
+  match: MbRecordingMatch | null;
+  artistGenres: MbTag[];
+  artistTags: MbTag[];
+  recordingGenres: MbTag[];
+  recordingTags: MbTag[];
+}
+
+type Attempt<T> = { ok: true; value: T } | { ok: false; error: string };
+
+async function attempt<T>(fn: () => Promise<T>): Promise<Attempt<T>> {
+  try {
+    return { ok: true, value: await fn() };
+  } catch (error) {
+    return { ok: false, error: toErrorMessage(error) };
+  }
+}
+
+/** iTunes の証拠を集める。itunesId があれば lookup、無ければ検索の最上位候補。 */
+async function gatherItunes(input: AnalyzeInput, title: string, artist?: string): Promise<ItunesData> {
+  if (input.itunesId) {
+    // ID 指定の lookup が落ちても検索でリカバーする
+    const track = await itunesLookup(input.itunesId).catch(() => null);
+    if (track) return { track, score: 1 };
+  }
+
+  const term = buildSearchTerm(title, artist);
+  const store = chooseStorefront(term);
+  const pickBest = (results: ItunesTrack[]): ItunesData => {
+    const scored = results
+      .map((track) => ({
+        track,
+        score: scoreMatch(
+          { title: track.trackName, artist: track.artistName, album: track.collectionName },
+          { title, artist },
+        ),
+      }))
+      .sort((a, b) => b.score - a.score);
+    return scored[0] ?? { track: null, score: 0 };
+  };
+
+  const primary = pickBest(await itunesSearch(term, { country: store.primary, limit: 8 }));
+  if (primary.track && primary.score >= 0.5) return primary;
+
+  // 優先ストアで決め手が無ければもう一方のストアも見る
+  const fallback = pickBest(await itunesSearch(term, { country: store.fallback, limit: 8 }));
+  return fallback.score > primary.score ? fallback : primary;
+}
+
+/** Deezer の証拠を集める。トラック → アルバム詳細の genres。 */
+async function gatherDeezer(input: AnalyzeInput, title: string, artist?: string): Promise<DeezerData> {
+  let track: DeezerTrack | null = null;
+  let score = 0;
+  const language = containsJapanese(buildSearchTerm(title, artist)) ? 'ja' : 'en';
+
+  if (input.deezerId) {
+    track = await deezerTrack(input.deezerId, { language }).catch(() => null);
+    if (track) score = 1;
+  }
+  if (!track) {
+    const results = await deezerSearchTracks(buildSearchTerm(title, artist), 8, { language });
+    const scored = results
+      .map((candidate) => ({
+        track: candidate,
+        score: scoreMatch(
+          {
+            title: candidate.title,
+            artist: candidate.artist?.name,
+            album: candidate.album?.title,
+          },
+          { title, artist },
+        ),
+      }))
+      .sort((a, b) => b.score - a.score);
+    track = scored[0]?.track ?? null;
+    score = scored[0]?.score ?? 0;
+  }
+
+  let album: DeezerAlbum | null = null;
+  if (track?.album?.id) {
+    // アルバム詳細が落ちてもトラック自体は使えるので、失敗は握りつぶす
+    album = await deezerAlbum(track.album.id, { language }).catch(() => null);
+  }
+  const genres = (album?.genres?.data ?? []).map((genre) => genre.name).filter(Boolean);
+  return { track, album, genres, score };
+}
+
+/** MusicBrainz の証拠を集める（内部で 1 req/sec に直列化される）。 */
+async function gatherMusicBrainz(title: string, artist?: string): Promise<MusicBrainzData> {
+  const match = await mbSearchRecording(title, artist);
+  if (!match) {
+    return { match: null, artistGenres: [], artistTags: [], recordingGenres: [], recordingTags: [] };
+  }
+  const artistInfo = match.artistId
+    ? await mbArtistGenres(match.artistId)
+    : { genres: [], tags: [] };
+  const recordingInfo = await mbRecordingTags(match.recordingId);
+  return {
+    match,
+    artistGenres: artistInfo.genres,
+    artistTags: artistInfo.tags,
+    recordingGenres: recordingInfo.genres,
+    recordingTags: recordingInfo.tags,
+  };
+}
+
+function toEvidence(
+  source: SourceName,
+  raw: string,
+  weight: number,
+  note?: string,
+): GenreEvidence {
+  const normalized = normalize(raw);
+  return {
+    source,
+    raw: raw.trim(),
+    canonicalId: normalized?.id ?? null,
+    weight: Math.round(weight * 1000) / 1000,
+    ...(note ? { note } : {}),
+  };
+}
+
+function pickTrack(
+  input: AnalyzeInput,
+  itunes: ItunesTrack | null,
+  deezer: DeezerData | null,
+  mb: MusicBrainzData | null,
+  title: string,
+  artist?: string,
+): TrackCandidate {
+  if (input.deezerId && deezer?.track) return deezerToCandidate(deezer.track);
+  if (itunes) return itunesToCandidate(itunes);
+  if (deezer?.track) return deezerToCandidate(deezer.track);
+  if (mb?.match) {
+    return {
+      id: `musicbrainz:${mb.match.recordingId}`,
+      title: mb.match.title ?? title,
+      artist: mb.match.artistName ?? artist ?? '',
+      durationMs: mb.match.length,
+      source: 'musicbrainz',
+      sourceId: mb.match.recordingId,
+    };
+  }
+  return {
+    id: `query:${normalizeText(title)}`,
+    title,
+    artist: artist ?? '',
+    source: 'itunes',
+    sourceId: '',
+  };
+}
+
+function buildExplanation(primary: GenreScore | null, level: ConfidenceLevel): string {
+  if (!primary) {
+    return 'どの情報源からもジャンル情報が得られませんでした。曲名とアーティストを変えて、もう一度試してみてください。';
+  }
+
+  // ソースごとにラベルを集める（"Pop" と "ポップ" のように正規化後に同じものは1つにまとめる）
+  const labelsBySource = new Map<SourceName, string[]>();
+  for (const item of primary.evidence) {
+    const labels = labelsBySource.get(item.source) ?? [];
+    const key = normalizeText(item.raw);
+    if (!labels.some((label) => normalizeText(label) === key)) labels.push(item.raw);
+    labelsBySource.set(item.source, labels);
+  }
+
+  // 同じラベル群を持つソースはまとめて列挙する
+  const groups = new Map<string, { sources: string[]; labels: string[] }>();
+  for (const [source, labels] of labelsBySource) {
+    const key = labels.map((label) => normalizeText(label)).join('|');
+    const group = groups.get(key) ?? { sources: [], labels };
+    group.sources.push(SOURCE_LABELS[source]);
+    groups.set(key, group);
+  }
+  const clauses = [...groups.values()].map(
+    (group) =>
+      `${group.sources.join(' と ')} は${group.labels.map((label) => `「${label}」`).join('')}`,
+  );
+  const basis = `${clauses.join('、')}と分類しています。`;
+  // 「R&B（R&B・ソウル）」のような重複表記を避ける
+  const label = primary.family.includes(primary.labelJa)
+    ? primary.labelJa
+    : `${primary.labelJa}（${primary.family}）`;
+  const percent = Math.round(primary.confidence * 100);
+
+  if (labelsBySource.size >= 2) {
+    if (level === 'high') return `${basis}総合して${label}と判断しました（一致度 ${percent}%）。`;
+    if (level === 'medium') {
+      return `${basis}総合して${label}の可能性が高いと判断しました（一致度 ${percent}%）。`;
+    }
+    return `${basis}総合して${label}の可能性があります（一致度 ${percent}%）。`;
+  }
+  return `${basis}情報源が1つだけなので、${label}という判定は参考程度に受け取ってください（一致度 ${percent}%）。`;
+}
+
+function buildCaveats(options: {
+  artist?: string;
+  primary: GenreScore | null;
+  level: ConfidenceLevel;
+  itunesRaw?: string;
+  itunesScore: number;
+  mb: MusicBrainzData | null;
+  failedSources: SourceName[];
+}): string[] {
+  const caveats: string[] = [];
+  const { artist, primary, level, itunesRaw, itunesScore, mb, failedSources } = options;
+
+  if (!artist) {
+    caveats.push('アーティスト名が指定されていないため、同名の別曲と混同している可能性があります。');
+  }
+
+  if (itunesRaw) {
+    const canonicalId = normalize(itunesRaw)?.id;
+    const def = canonicalId ? getGenre(canonicalId) : undefined;
+    if (def?.broad && primary && primary.id !== canonicalId) {
+      caveats.push(`iTunes は「${itunesRaw}」としか分類していません。`);
+    } else if (def?.broad && primary?.id === canonicalId) {
+      caveats.push(
+        `iTunes の「${itunesRaw}」は大まかな分類です。より細かいジャンルは特定できませんでした。`,
+      );
+    }
+  }
+
+  if (itunesScore > 0 && itunesScore < 0.5) {
+    caveats.push('タイトルとアーティストに完全一致する曲が見つからず、近い曲の情報を使っています。');
+  }
+
+  if (mb && mb.artistGenres.length === 0 && mb.recordingTags.length === 0) {
+    caveats.push('MusicBrainz にはこの曲・アーティストのジャンルタグが付いていません。');
+  }
+
+  if (!primary) {
+    caveats.push('iTunes・Deezer・MusicBrainz のいずれからもジャンルを取得できませんでした。');
+  } else if (level === 'low') {
+    caveats.push('判定の根拠が薄いため、参考程度にしてください。');
+  }
+
+  if (failedSources.length > 0) {
+    caveats.push(`${failedSources.map((source) => SOURCE_LABELS[source]).join('・')} に接続できませんでした。`);
+  }
+  return caveats;
+}
+
+/** ジャンル判定のメイン処理。 */
+export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<AnalyzeOutcome> {
+  const title = input.title.trim();
+  const artist = input.artist?.trim() || undefined;
+  const warnings: string[] = [];
+  const failedSources: SourceName[] = [];
+  const lastfmKey = envValue(env, 'LASTFM_API_KEY');
+
+  const [itunesAttempt, deezerAttempt, mbAttempt, lastfmAttempt] = await Promise.all([
+    attempt(() => gatherItunes(input, title, artist)),
+    attempt(() => gatherDeezer(input, title, artist)),
+    attempt(() => gatherMusicBrainz(title, artist)),
+    artist && lastfmKey
+      ? attempt(() => lastfmTopTags(lastfmKey, artist, title))
+      : Promise.resolve({ ok: true as const, value: [] as MbTag[] }),
+  ]);
+
+  const itunes = itunesAttempt.ok ? itunesAttempt.value : null;
+  const deezer = deezerAttempt.ok ? deezerAttempt.value : null;
+  const mb = mbAttempt.ok ? mbAttempt.value : null;
+  const lastfmTags = lastfmAttempt.ok ? lastfmAttempt.value : [];
+
+  const recordFailure = (source: SourceName, message: string): void => {
+    failedSources.push(source);
+    warnings.push(`${SOURCE_LABELS[source]} から情報を取得できませんでした（${message}）。`);
+  };
+  if (!itunesAttempt.ok) recordFailure('itunes', itunesAttempt.error);
+  if (!deezerAttempt.ok) recordFailure('deezer', deezerAttempt.error);
+  if (!mbAttempt.ok) recordFailure('musicbrainz', mbAttempt.error);
+  if (!lastfmAttempt.ok) recordFailure('lastfm', lastfmAttempt.error);
+
+  /* ------------------------------- 証拠を組み立てる ------------------------------- */
+  const evidence: GenreEvidence[] = [];
+  if (itunes?.track?.primaryGenreName) {
+    evidence.push(
+      toEvidence('itunes', itunes.track.primaryGenreName, ITUNES_WEIGHT, 'iTunes の公式ジャンル分類'),
+    );
+  }
+  // Deezer は 1 アルバムに複数ジャンルを返すことがあるため、合計が 0.75 になるよう分割する
+  const deezerGenres = deezer?.genres ?? [];
+  const deezerGenreWeight = deezerGenres.length > 0 ? DEEZER_WEIGHT / deezerGenres.length : 0;
+  for (const genre of deezerGenres) {
+    evidence.push(toEvidence('deezer', genre, deezerGenreWeight, 'Deezer のアルバムジャンル'));
+  }
+  for (const tag of mb?.artistGenres ?? []) {
+    evidence.push(
+      toEvidence(
+        'musicbrainz',
+        tag.name,
+        musicbrainzArtistWeight(tag.count),
+        `MusicBrainz のアーティストジャンル（投票数 ${tag.count}）`,
+      ),
+    );
+  }
+  for (const tag of mb?.recordingGenres ?? []) {
+    evidence.push(
+      toEvidence(
+        'musicbrainz',
+        tag.name,
+        musicbrainzRecordingWeight(tag.count),
+        `MusicBrainz のレコーディングジャンル（投票数 ${tag.count}）`,
+      ),
+    );
+  }
+  for (const tag of mb?.recordingTags ?? []) {
+    evidence.push(
+      toEvidence(
+        'musicbrainz',
+        tag.name,
+        musicbrainzRecordingWeight(tag.count),
+        `MusicBrainz のレコーディングタグ（投票数 ${tag.count}）`,
+      ),
+    );
+  }
+  for (const tag of lastfmTags) {
+    evidence.push(
+      toEvidence('lastfm', tag.name, lastfmWeight(tag.count), `Last.fm のタグ（${tag.count}票）`),
+    );
+  }
+
+  const { primary, others } = aggregateGenres(evidence);
+  const matchedCount = evidence.filter((item) => item.canonicalId).length;
+  const level = confidenceLevel(primary?.confidence ?? 0, matchedCount);
+
+  /* ------------------------------- 細分類タグ ------------------------------- */
+  const fineTagMap = new Map<string, { name: string; count: number; source: SourceName }>();
+  const addFineTag = (name: string, count: number, source: SourceName): void => {
+    const key = normalizeText(name);
+    if (!key) return;
+    if (normalize(name)) return; // 対応表に載っているものは証拠側で扱う
+    const existing = fineTagMap.get(key);
+    if (!existing || count > existing.count) fineTagMap.set(key, { name, count, source });
+  };
+  for (const tag of mb?.artistTags ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
+  for (const tag of mb?.recordingTags ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
+  for (const tag of mb?.artistGenres ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
+  for (const tag of mb?.recordingGenres ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
+  for (const tag of lastfmTags) addFineTag(tag.name, tag.count, 'lastfm');
+
+  const fineTags = [...fineTagMap.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  /* --------------------------------- 曲情報 --------------------------------- */
+  const track = pickTrack(input, itunes?.track ?? null, deezer, mb, title, artist);
+  if (!track.rawGenre) {
+    track.rawGenre =
+      primary?.labelEn ?? deezer?.genres[0] ?? itunes?.track?.primaryGenreName ?? undefined;
+  }
+
+  const usedSources = new Set<SourceName>();
+  for (const item of evidence) usedSources.add(item.source);
+  for (const tag of fineTags) usedSources.add(tag.source);
+
+  const explanation = buildExplanation(primary, level);
+  const caveats = buildCaveats({
+    artist,
+    primary,
+    level,
+    itunesRaw: itunes?.track?.primaryGenreName,
+    itunesScore: itunes?.score ?? 0,
+    mb,
+    failedSources,
+  });
+
+  const genreInfo = primary
+    ? {
+        description: getGenre(primary.id)?.description ?? '',
+        related: relatedGenres(primary.id),
+      }
+    : undefined;
+
+  const judgment: GenreJudgment = {
+    track,
+    primary,
+    others,
+    fineTags,
+    evidence: [...evidence].sort((a, b) => b.weight - a.weight),
+    sourcesUsed: [...usedSources],
+    failedSources,
+    confidence: level,
+    explanation,
+    caveats,
+    ...(genreInfo ? { genreInfo } : {}),
+  };
+
+  return { judgment, warnings };
+}

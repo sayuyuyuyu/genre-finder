@@ -1,0 +1,8 @@
+name = "genre-finder"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "dist"
+
+# 任意のシークレット（`wrangler pages secret put <NAME> --project-name genre-finder`）
+#   SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET : Spotify リンクを正確に解決する場合
+#   LASTFM_API_KEY                            : Last.fm のタグを追加の証拠に使う場合
+# 未設定でも iTunes / Deezer / MusicBrainz / oEmbed で動作します。

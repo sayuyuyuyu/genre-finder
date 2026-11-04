@@ -1,0 +1,11 @@
+# ローカル開発用の任意シークレット。`cp .dev.vars.example .dev.vars` して使う。
+# 未設定でも iTunes / Deezer / MusicBrainz / oEmbed で動作します。
+
+# Spotify のリンクを正確に曲名+アーティストへ解決したい場合のみ設定
+# https://developer.spotify.com/dashboard でアプリを作成して取得
+SPOTIFY_CLIENT_ID=
+SPOTIFY_CLIENT_SECRET=
+
+# Last.fm のタグを追加の根拠として使いたい場合のみ設定
+# https://www.last.fm/api/account/create
+LASTFM_API_KEY=

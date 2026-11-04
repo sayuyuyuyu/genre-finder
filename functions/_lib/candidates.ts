@@ -1,0 +1,101 @@
+/**
+ * 外部 API の結果を TrackCandidate に変換し、クエリとの近さで並べる。
+ */
+
+import type { TrackCandidate } from '../../shared/types';
+import { trackKey } from '../../shared/genre/normalize';
+import { scoreMatch } from '../../shared/genre/title';
+import { artworkUrl, type ItunesTrack } from './itunes';
+import type { DeezerTrack } from './deezer';
+
+export function itunesToCandidate(track: ItunesTrack): TrackCandidate {
+  const year = track.releaseDate ? Number.parseInt(track.releaseDate.slice(0, 4), 10) : undefined;
+  return {
+    id: `itunes:${track.trackId}`,
+    title: track.trackName,
+    artist: track.artistName,
+    album: track.collectionName,
+    year: Number.isFinite(year) ? year : undefined,
+    releaseDate: track.releaseDate,
+    artworkUrl: artworkUrl(track),
+    durationMs: track.trackTimeMillis,
+    source: 'itunes',
+    sourceId: String(track.trackId),
+    rawGenre: track.primaryGenreName,
+    links: track.trackViewUrl ? { itunes: track.trackViewUrl } : undefined,
+  };
+}
+
+export function deezerToCandidate(track: DeezerTrack): TrackCandidate {
+  const year = track.release_date
+    ? Number.parseInt(track.release_date.slice(0, 4), 10)
+    : undefined;
+  return {
+    id: `deezer:${track.id}`,
+    title: track.title,
+    artist: track.artist?.name ?? '',
+    album: track.album?.title,
+    year: Number.isFinite(year) ? year : undefined,
+    releaseDate: track.release_date,
+    artworkUrl: track.album?.cover_medium,
+    durationMs: typeof track.duration === 'number' ? track.duration * 1000 : undefined,
+    source: 'deezer',
+    sourceId: String(track.id),
+    links: track.link ? { deezer: track.link } : undefined,
+  };
+}
+
+const SOURCE_PRIORITY: Record<string, number> = { itunes: 0, deezer: 1, musicbrainz: 2 };
+
+/** これ未満のスコアの候補は検索結果から除外する。 */
+export const MIN_CANDIDATE_SCORE = 0.12;
+/** 全候補が閾値未満だったときに残す件数（UI が空にならないように）。 */
+export const FALLBACK_CANDIDATE_COUNT = 5;
+/** 検索結果として返す最大件数。 */
+export const MAX_CANDIDATE_COUNT = 20;
+
+export interface RankOptions {
+  minScore?: number;
+  fallbackCount?: number;
+  maxCount?: number;
+}
+
+/**
+ * スコアを付けて重複を排除し、クエリに近い順に並べる。
+ * 重複は「正規化した曲名 + アーティスト」で判定し、スコアが高い方（同点なら iTunes）を残す。
+ * 閾値未満の候補は捨てるが、全滅する場合は上位数件を残す。
+ */
+export function rankCandidates(
+  candidates: TrackCandidate[],
+  query: { title: string; artist?: string },
+  options: RankOptions = {},
+): TrackCandidate[] {
+  const best = new Map<string, TrackCandidate>();
+  for (const candidate of candidates) {
+    if (!candidate.title) continue;
+    const score = scoreMatch(
+      { title: candidate.title, artist: candidate.artist, album: candidate.album },
+      query,
+    );
+    const scored: TrackCandidate = { ...candidate, score };
+    const key = trackKey(candidate.title, candidate.artist);
+    const existing = best.get(key);
+    if (!existing) {
+      best.set(key, scored);
+      continue;
+    }
+    const existingScore = existing.score ?? 0;
+    const priority = SOURCE_PRIORITY[candidate.source] ?? 9;
+    const existingPriority = SOURCE_PRIORITY[existing.source] ?? 9;
+    if (score > existingScore || (score === existingScore && priority < existingPriority)) {
+      best.set(key, scored);
+    }
+  }
+
+  const sorted = [...best.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const minScore = options.minScore ?? MIN_CANDIDATE_SCORE;
+  const maxCount = options.maxCount ?? MAX_CANDIDATE_COUNT;
+  const passing = sorted.filter((candidate) => (candidate.score ?? 0) >= minScore);
+  if (passing.length > 0) return passing.slice(0, maxCount);
+  return sorted.slice(0, options.fallbackCount ?? FALLBACK_CANDIDATE_COUNT);
+}
