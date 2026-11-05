@@ -16,6 +16,8 @@ interface JudgmentViewProps {
   canGoBack: boolean;
   onBack: () => void;
   onReset: () => void;
+  /** 同じアーティストの曲を検索する。 */
+  onSearchArtist: (artist: string) => void;
 }
 
 export default function JudgmentView({
@@ -24,6 +26,7 @@ export default function JudgmentView({
   canGoBack,
   onBack,
   onReset,
+  onSearchArtist,
 }: JudgmentViewProps) {
   const { track, primary, others, fineTags, evidence, failedSources, caveats, explanation } =
     judgment;
@@ -90,7 +93,20 @@ export default function JudgmentView({
           <div className="judgment__track">
             <p className="micro">TRACK</p>
             <h2 className="judgment__track-title">{track.title}</h2>
-            <p className="judgment__artist">{track.artist}</p>
+            <p className="judgment__artist">
+              {track.artist}
+              {track.artist && (
+                <button
+                  type="button"
+                  className="artist-more"
+                  onClick={() => onSearchArtist(track.artist)}
+                  title={`${track.artist} の曲を検索する`}
+                  aria-label={`${track.artist} の曲を検索する`}
+                >
+                  <span aria-hidden="true">↻</span>
+                </button>
+              )}
+            </p>
             {meta && <p className="judgment__meta">{meta}</p>}
             <PreviewButton preview={preview} />
             <div className="ext-links" aria-label="外部サービスで開く">

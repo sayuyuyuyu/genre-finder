@@ -835,3 +835,44 @@
 .lamp--failed i {
   background: var(--rust);
 }
+
+.ext-link--internal {
+  padding: 3px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ext-link--internal:hover {
+  border-color: var(--line-amber);
+  color: var(--amber);
+}
+
+.artist-more {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  margin-left: 8px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--cream-48);
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+  transition:
+    color 0.18s var(--ease),
+    border-color 0.18s var(--ease);
+}
+
+.artist-more:hover {
+  border-color: var(--line-amber);
+  color: var(--amber);
+}

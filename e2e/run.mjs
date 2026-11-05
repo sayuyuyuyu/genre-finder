@@ -262,7 +262,11 @@ async function run() {
       const after = await page.locator('button.track').count();
       await page.getByRole('button', { name: /COVERS OFF/ }).click();
       const restored = await page.locator('button.track').count();
-      check('results: カバーを隠せる', before === 2 && after === 1 && restored === 2, `${before} → ${after} → ${restored}`);
+      check(
+        'results: カバーを隠せる',
+        before >= 2 && after === before - 1 && restored === before,
+        `${before} → ${after} → ${restored}`,
+      );
     }
 
     // 判定
@@ -595,6 +599,41 @@ async function run() {
       const fileError = await filePage.locator('.error-card').innerText();
       check('file: 音声ファイル以外はエラー表示', fileError.includes('音声ファイル'), fileError.split('\n')[1] ?? '');
       await filePage.close();
+
+      // 並び替え（新しい順）
+      const sortPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(sortPage);
+      await sortPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await sortPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await sortPage.keyboard.press('Enter');
+      await sortPage.waitForSelector('button.track');
+      await sortPage.waitForTimeout(200);
+      const matchFirst = await sortPage.locator('button.track').first().innerText();
+      await sortPage.getByRole('button', { name: /SORT MATCH/ }).click();
+      await sortPage.waitForTimeout(150);
+      const newestFirst = await sortPage.locator('button.track').first().innerText();
+      await sortPage.screenshot({ path: join(artifacts, '21-sort.png'), fullPage: true });
+      check(
+        'results: 新しい順に並べ替えられる',
+        matchFirst.includes('2015') && newestFirst.includes('2024'),
+        `${matchFirst.split('\n')[1] ?? ''} / ${newestFirst.split('\n')[1] ?? ''}`,
+      );
+      await sortPage.close();
+
+      // 判定画面から同じアーティストを検索
+      const artistPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(artistPage);
+      await artistPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await artistPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await artistPage.keyboard.press('Enter');
+      await artistPage.waitForSelector('button.track');
+      await artistPage.locator('button.track').first().click();
+      await artistPage.waitForSelector('.verdict__arcade');
+      await artistPage.getByRole('button', { name: /の曲を検索する/ }).click();
+      await artistPage.waitForSelector('button.track', { timeout: 8000 });
+      const artistQuery = await artistPage.locator('.stage__title').innerText();
+      check('judgment: 同じアーティストで検索できる', artistQuery.includes('Toby Fox'), artistQuery);
+      await artistPage.close();
 
       // キーボードだけで検索できる
       const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

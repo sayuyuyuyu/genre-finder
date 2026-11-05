@@ -157,6 +157,10 @@ export default function App() {
               canGoBack={canGoBack}
               onBack={() => finder.backToResults()}
               onReset={handleReset}
+              onSearchArtist={(artist: string) => {
+                setInput(artist);
+                finder.search(artist);
+              }}
             />
           )}
           {phase === 'error' && error && (

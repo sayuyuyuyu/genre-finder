@@ -23,8 +23,15 @@ export default function ResultsView({
 }: ResultsViewProps) {
   // カバー・カラオケ版を隠せるようにする（既定は表示）
   const [showCovers, setShowCovers] = useState(true);
+  // 並び順: 関連度（既定） / 新しい順
+  const [sortBy, setSortBy] = useState<'match' | 'newest'>('match');
   const coverCount = tracks.filter((track) => track.isCover).length;
-  const visibleTracks = showCovers ? tracks : tracks.filter((track) => !track.isCover);
+  const hasYear = tracks.some((track) => Boolean(track.year));
+  const filteredTracks = showCovers ? tracks : tracks.filter((track) => !track.isCover);
+  const visibleTracks =
+    sortBy === 'newest'
+      ? [...filteredTracks].sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+      : filteredTracks;
 
   // 選曲カーソル（↑↓ で移動、Enter で判定）
   const [cursor, setCursor] = useState(0);
@@ -32,7 +39,7 @@ export default function ResultsView({
 
   useEffect(() => {
     setCursor(0);
-  }, [visibleTracks.length, showCovers]);
+  }, [visibleTracks.length, showCovers, sortBy]);
 
   useEffect(() => {
     function isInteractive(element: Element | null): boolean {
@@ -78,6 +85,17 @@ export default function ResultsView({
           </p>
         </div>
         <div className="stage__actions">
+          {hasYear && (
+            <button
+              type="button"
+              className={`btn btn--ghost btn--small${sortBy === 'newest' ? ' is-active' : ''}`}
+              onClick={() => setSortBy((value) => (value === 'match' ? 'newest' : 'match'))}
+              aria-pressed={sortBy === 'newest'}
+              title="並び順を切り替える（関連度 / 新しい順）"
+            >
+              SORT {sortBy === 'newest' ? 'NEWEST' : 'MATCH'}
+            </button>
+          )}
           {coverCount > 0 && (
             <button
               type="button"
