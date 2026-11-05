@@ -27,6 +27,8 @@
   --amber-bright: #f3c66a;
   --amber-soft: rgba(232, 176, 75, 0.09);
   --rust: #b5523a;
+  /* 小さな文字でもコントラスト4.5:1を満たす明るめの赤 */
+  --rust-bright: #dd927a;
   --rust-soft: rgba(181, 82, 58, 0.08);
 
   --font-display: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP',
@@ -695,7 +697,7 @@ button.chip:hover {
 }
 
 .error-card .micro {
-  color: rgba(210, 120, 96, 0.85);
+  color: var(--rust-bright);
 }
 
 .error-card__title {

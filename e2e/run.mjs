@@ -466,6 +466,28 @@ async function run() {
       check('results: ↑↓で選曲カーソルが動き Enter で判定', activeIndex === 1, `active=${activeIndex}`);
       await cursorPage.close();
 
+      // 情報源が落ちたときの注記（赤系）のコントラスト
+      const warnPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(warnPage);
+      const warnFixture = fixture('analyze');
+      warnFixture.judgment.failedSources = ['musicbrainz'];
+      warnFixture.judgment.warnings = [];
+      await warnPage.route('**/api/analyze**', (route) => route.fulfill({ json: warnFixture }));
+      await warnPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await warnPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await warnPage.keyboard.press('Enter');
+      await warnPage.waitForSelector('button.track');
+      await warnPage.locator('button.track').first().click();
+      await warnPage.waitForSelector('.judgment__note--warn', { timeout: 8000 });
+      const warnContrast = await contrastViolations(warnPage);
+      check(
+        'a11y: 注意注記のコントラスト（WCAG AA）',
+        warnContrast.length === 0,
+        warnContrast.slice(0, 3).map((v) => `${v.cr} .${v.cls}`).join(' / '),
+      );
+      await warnPage.screenshot({ path: join(artifacts, '19-warn-note.png'), fullPage: true });
+      await warnPage.close();
+
       // キーボードだけで検索できる
       const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
       await installMocks(kbPage);

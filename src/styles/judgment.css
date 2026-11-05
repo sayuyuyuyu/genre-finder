@@ -443,12 +443,12 @@
 }
 
 .judgment__note--warn {
-  color: var(--rust);
+  color: var(--rust-bright);
 }
 
 .judgment__note--warn::before {
   content: '! ';
-  color: var(--rust);
+  color: var(--rust-bright);
 }
 
 /* --------------------------------- footer --------------------------------- */
@@ -827,7 +827,7 @@
 }
 
 .lamp--failed {
-  color: rgba(210, 120, 96, 0.95);
+  color: var(--rust-bright);
 }
 
 .lamp--failed i {
