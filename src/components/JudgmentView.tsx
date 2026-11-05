@@ -34,11 +34,26 @@ export default function JudgmentView({
 
   // SPECTRUM の行を選ぶと DATA FEED がそのジャンルの根拠だけになる
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   useEffect(() => setSelectedId(null), [judgment]);
   const scores = [primary, ...others].filter((score): score is GenreScore => Boolean(score));
   const selected = scores.find((score) => score.id === selectedId) ?? null;
   const feedEvidence = selected ? selected.evidence : evidence;
   const feedLabel = selected ? arcadeOf(selected) : null;
+
+  /** 「曲名 / アーティスト — GENRE」+ 共有URL をコピーする。 */
+  async function handleCopy() {
+    const genre = primary ? arcadeOf(primary) : 'UNKNOWN';
+    const genreJa = primary?.labelJa ?? '判定不能';
+    const text = `${track.title} / ${track.artist} — ${genre}（${genreJa}）\n${window.location.href}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // クリップボードが使えない環境では何もしない
+    }
+  }
   const failed = failedSources.length > 0;
 
   return (
@@ -52,9 +67,19 @@ export default function JudgmentView({
           <span className="judgment__topbar-spacer" aria-hidden="true" />
         )}
         <p className="micro">JUDGMENT</p>
-        <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>
-          別の曲
-        </button>
+        <div className="judgment__topbar-actions">
+          <button
+            type="button"
+            className="btn btn--ghost btn--small"
+            onClick={() => void handleCopy()}
+            title="曲名とジャンルをコピー"
+          >
+            {copied ? 'COPIED' : 'COPY'}
+          </button>
+          <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>
+            別の曲
+          </button>
+        </div>
       </div>
 
       <div className="judgment__grid">

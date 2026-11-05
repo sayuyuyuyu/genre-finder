@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SOURCE_LABELS } from '@shared/types';
 import type { TrackCandidate } from '@shared/types';
 import TrackArtwork from '@/components/TrackArtwork';
@@ -20,6 +21,11 @@ export default function ResultsView({
   onSelect,
   onReset,
 }: ResultsViewProps) {
+  // カバー・カラオケ版を隠せるようにする（既定は表示）
+  const [showCovers, setShowCovers] = useState(true);
+  const coverCount = tracks.filter((track) => track.isCover).length;
+  const visibleTracks = showCovers ? tracks : tracks.filter((track) => !track.isCover);
+
   return (
     <section className="stage" aria-labelledby="results-title">
       <header className="stage__head">
@@ -29,12 +35,25 @@ export default function ResultsView({
             「{displayQuery(queryLabel)}」
           </h2>
           <p className="stage__sub">
-            {tracks.length > 0 ? `${tracks.length} 曲 · 選ぶと判定` : '候補なし'}
+            {visibleTracks.length > 0 ? `${visibleTracks.length} 曲 · 選ぶと判定` : '候補なし'}
           </p>
         </div>
-        <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>
-          別の曲を調べる
-        </button>
+        <div className="stage__actions">
+          {coverCount > 0 && (
+            <button
+              type="button"
+              className={`btn btn--ghost btn--small${showCovers ? '' : ' is-active'}`}
+              onClick={() => setShowCovers((value) => !value)}
+              aria-pressed={!showCovers}
+              title="カバー・カラオケ版の表示を切り替える"
+            >
+              COVERS {showCovers ? 'ON' : 'OFF'}
+            </button>
+          )}
+          <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>
+            別の曲を調べる
+          </button>
+        </div>
       </header>
 
       {notice && (
@@ -43,15 +62,17 @@ export default function ResultsView({
         </p>
       )}
 
-      {tracks.length === 0 ? (
+      {visibleTracks.length === 0 ? (
         <div className="empty">
           <div className="empty__art" aria-hidden="true">
             <span className="empty__disc" />
             <span className="empty__mark">?</span>
           </div>
           <div className="empty__body">
-            <p className="micro">NO MATCH</p>
-            <h3 className="empty__title">曲が見つかりません</h3>
+            <p className="micro">{tracks.length > 0 ? 'COVERS HIDDEN' : 'NO MATCH'}</p>
+            <h3 className="empty__title">
+              {tracks.length > 0 ? '原曲が見つかりません' : '曲が見つかりません'}
+            </h3>
             <ul className="empty__chips" aria-label="検索のヒント">
               <li className="chip">曲名 アーティスト</li>
               <li className="chip">英語表記</li>
@@ -59,6 +80,15 @@ export default function ResultsView({
               <li className="chip">音声ファイル</li>
             </ul>
             <div className="empty__actions">
+              {tracks.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => setShowCovers(true)}
+                >
+                  カバーも表示する
+                </button>
+              )}
               <button type="button" className="btn btn--primary" onClick={onReset}>
                 曲名を入れ直す
               </button>
@@ -67,7 +97,7 @@ export default function ResultsView({
         </div>
       ) : (
         <ol className="results">
-          {tracks.map((track, index) => (
+          {visibleTracks.map((track, index) => (
             <li key={track.id || `${track.source}-${track.sourceId}-${index}`}>
               <TrackRow track={track} index={index} featured={index === 0} onSelect={onSelect} />
             </li>

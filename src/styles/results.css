@@ -361,3 +361,15 @@
     padding-bottom: 14px;
   }
 }
+
+.stage__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stage__actions .btn.is-active {
+  border-color: var(--line-amber);
+  color: var(--amber);
+}

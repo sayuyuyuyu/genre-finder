@@ -1,5 +1,7 @@
 {
-  "query": { "title": "Megalovania Toby Fox" },
+  "query": {
+    "title": "Megalovania Toby Fox"
+  },
   "tracks": [
     {
       "id": "itunes:6813343186",
@@ -13,19 +15,22 @@
       "sourceId": "6813343186",
       "rawGenre": "Soundtrack",
       "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ff/9d/27/ff9d270c-81b2-df99-80f5-5b87048ae88f/mzaf_16037815512034579723.plus.aac.p.m4a",
-      "links": { "itunes": "https://music.apple.com/us/album/megalovania/6813342945?i=6813343186" },
+      "links": {
+        "itunes": "https://music.apple.com/us/album/megalovania/6813342945?i=6813343186"
+      },
       "score": 1
     },
     {
       "id": "deezer:880000001",
-      "title": "Megalovania",
+      "title": "Megalovania (Piano Cover)",
       "artist": "Toby Fox",
       "album": "UNDERTALE Soundtrack",
       "year": 2015,
       "durationMs": 156000,
       "source": "deezer",
       "sourceId": "880000001",
-      "score": 0.8
+      "score": 0.8,
+      "isCover": true
     }
   ],
   "warnings": []

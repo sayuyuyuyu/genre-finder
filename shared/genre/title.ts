@@ -252,19 +252,28 @@ function bracketVariantPenalty(candidateTitle: string, queryTitle: string): numb
   return 0.05;
 }
 
-/** 候補側にだけ現れるカバー・非公式版シグナルによる減点（0 か 0.4）。 */
-function coverPenalty(candidate: ScorableCandidate, query: ScorableQuery): number {
-  const queryText = `${query.title} ${query.artist ?? ''}`.normalize('NFKC').toLowerCase();
+/** 候補に含まれるカバー・非公式版シグナル（クエリ側にも含まれるものは除外）。 */
+export function coverSignalsIn(
+  candidate: ScorableCandidate,
+  query?: ScorableQuery,
+): string[] {
   const candidateText =
     `${candidate.title} ${candidate.artist ?? ''} ${candidate.album ?? ''}`
       .normalize('NFKC')
       .toLowerCase();
   const matches = candidateText.match(COVER_SIGNAL);
-  if (!matches || matches.length === 0) return 0;
-  const fresh = [...new Set(matches.map((signal) => signal.toLowerCase()))].filter(
+  if (!matches || matches.length === 0) return [];
+  const queryText = query
+    ? `${query.title} ${query.artist ?? ''}`.normalize('NFKC').toLowerCase()
+    : '';
+  return [...new Set(matches.map((signal) => signal.toLowerCase()))].filter(
     (signal) => !queryText.includes(signal),
   );
-  return fresh.length > 0 ? 0.4 : 0;
+}
+
+/** 候補側にだけ現れるカバー・非公式版シグナルによる減点（0 か 0.4）。 */
+function coverPenalty(candidate: ScorableCandidate, query: ScorableQuery): number {
+  return coverSignalsIn(candidate, query).length > 0 ? 0.4 : 0;
 }
 
 /**

@@ -129,6 +129,17 @@ async function run() {
 
   try {
     const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1.5 });
+    await page.addInitScript(() => {
+      window.__copied = '';
+      Object.defineProperty(navigator, 'clipboard', {
+        configurable: true,
+        value: {
+          writeText: async (text) => {
+            window.__copied = text;
+          },
+        },
+      });
+    });
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => {
       if (message.type() === 'error') errors.push(message.text());
@@ -184,6 +195,14 @@ async function run() {
     await page.screenshot({ path: join(artifacts, '02-results.png'), fullPage: true });
     check('results: 候補が出る', resultCount > 0, `${resultCount} 件`);
     check('results: 先頭が強調される', (await page.locator('.badge').count()) === 1);
+    if (mode === 'mock') {
+      const before = await page.locator('button.track').count();
+      await page.getByRole('button', { name: /COVERS ON/ }).click();
+      const after = await page.locator('button.track').count();
+      await page.getByRole('button', { name: /COVERS OFF/ }).click();
+      const restored = await page.locator('button.track').count();
+      check('results: カバーを隠せる', before === 2 && after === 1 && restored === 2, `${before} → ${after} → ${restored}`);
+    }
 
     // 判定
     await page.locator('button.track').first().click();
@@ -205,6 +224,15 @@ async function run() {
     check('judgment: SPECTRUM が 2 行以上', spectrum >= 2, `${spectrum} 行`);
     check('judgment: DATA FEED が 1 行以上', feed >= 1, `${feed} 行`);
     check('judgment: コメントが 1 行', comment.length > 0 && comment.length < 60);
+    await page.getByRole('button', { name: 'COPY' }).click();
+    await page.waitForTimeout(120);
+    const copied = await page.evaluate(() => window.__copied ?? '');
+    check(
+      'judgment: COPYで曲名とジャンルをコピー',
+      copied.includes('Megalovania') && copied.includes('CHIPTUNE') && copied.includes('?t='),
+      copied.replace(/\n/g, ' | ').slice(0, 70),
+    );
+
     const contrast = await contrastViolations(page);
     check(
       'a11y: テキストのコントラスト（WCAG AA）',

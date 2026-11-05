@@ -5,7 +5,7 @@
 import type { TrackCandidate } from '../../shared/types';
 import { normalize, trackKey } from '../../shared/genre/normalize';
 import { getGenre } from '../../shared/genre/taxonomy';
-import { scoreMatch } from '../../shared/genre/title';
+import { coverSignalsIn, scoreMatch } from '../../shared/genre/title';
 import { artworkUrl, type ItunesTrack } from './itunes';
 import type { DeezerTrack } from './deezer';
 
@@ -113,7 +113,14 @@ export function rankCandidates(
       { title: candidate.title, artist: candidate.artist, album: candidate.album },
       query,
     );
-    const scored: TrackCandidate = { ...candidate, score };
+    const scored: TrackCandidate = {
+      ...candidate,
+      score,
+      isCover: coverSignalsIn(
+        { title: candidate.title, artist: candidate.artist, album: candidate.album },
+        query,
+      ).length > 0,
+    };
     const key = trackKey(candidate.title, candidate.artist);
     const existing = best.get(key);
     if (!existing) {

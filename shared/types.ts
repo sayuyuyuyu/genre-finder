@@ -44,6 +44,8 @@ export interface TrackCandidate {
   score?: number;
   /** ソースが持つ人気度（Deezer の rank）。同点時の優先度に使う内部値。 */
   popularity?: number;
+  /** カバー・カラオケ・オルゴール等の非公式版と判定した。UI の表示切替に使う。 */
+  isCover?: boolean;
 }
 
 /** あるソースが主張したジャンル 1 件。 */

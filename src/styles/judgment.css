@@ -766,3 +766,19 @@
     padding-top: 18px;
   }
 }
+
+.judgment__topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .judgment__topbar-actions {
+    flex: 1;
+  }
+
+  .judgment__topbar-actions .btn {
+    flex: 1;
+  }
+}
