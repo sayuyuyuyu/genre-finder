@@ -31,6 +31,7 @@ import { toErrorMessage } from './http';
 import { itunesLookup, itunesSearch, type ItunesTrack } from './itunes';
 import { lastfmTopTags } from './lastfm';
 import { mbArtistGenres, mbRecordingTags, mbSearchRecording, type MbRecordingMatch, type MbTag } from './musicbrainz';
+import { cached } from './cache';
 import { deezerToCandidate, itunesToCandidate } from './candidates';
 import { detectGameMusic, detectGameWork, type GameDetectionField } from './game-detect';
 
@@ -151,8 +152,9 @@ async function gatherMusicBrainz(title: string, artist?: string): Promise<MusicB
   if (!match) {
     return { match: null, artistGenres: [], artistTags: [], recordingGenres: [], recordingTags: [] };
   }
+  // アーティストのジャンルは同じアーティストの別曲でも使えるので長めにキャッシュする
   const artistInfo = match.artistId
-    ? await mbArtistGenres(match.artistId)
+    ? await cached(`mb-artist:${match.artistId}`, 86_400, () => mbArtistGenres(match.artistId!))
     : { genres: [], tags: [] };
 
   // MusicBrainz は 1 req/sec 制限があるため、アーティストのジャンルが十分に取れているときは
