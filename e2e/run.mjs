@@ -235,6 +235,14 @@ async function run() {
       copied.replace(/\n/g, ' | ').slice(0, 70),
     );
 
+    const lampCount = await page.locator('.lamp').count();
+    const agreeCount = await page.locator('.lamp--agree').count();
+    check(
+      'judgment: 情報源ランプが出る',
+      lampCount >= 3 && agreeCount >= 1,
+      `${agreeCount}/${lampCount} が一致`,
+    );
+
     const contrast = await contrastViolations(page);
     check(
       'a11y: テキストのコントラスト（WCAG AA）',

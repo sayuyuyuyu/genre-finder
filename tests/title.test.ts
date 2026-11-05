@@ -234,3 +234,14 @@ describe('カバー・カラオケ表記の減点', () => {
     expect(Math.abs(a - b)).toBeLessThan(0.02);
   });
 });
+
+describe('カバーブランドの検出', () => {
+  it('KIDZ BOP や Lullapop をカバーとして減点する', () => {
+    const query = { title: 'Blinding Lights' };
+    const original = scoreMatch({ title: 'Blinding Lights', artist: 'The Weeknd' }, query);
+    const kidz = scoreMatch({ title: 'Blinding Lights', artist: 'KIDZ BOP Kids' }, query);
+    const lullapop = scoreMatch({ title: 'Blinding Lights', artist: 'Lullapop' }, query);
+    expect(original).toBeGreaterThan(kidz);
+    expect(original).toBeGreaterThan(lullapop);
+  });
+});

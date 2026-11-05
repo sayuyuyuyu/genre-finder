@@ -149,7 +149,7 @@ const BRACKET_VARIANT =
 
 /** カバー・非公式版のシグナル。候補側にだけ含まれる場合は大きく減点する。 */
 const COVER_SIGNAL =
-  /(cover|karaoke|tribute|lullaby|8-?bit|backing track|instrumental|made famous|originally performed|in the style of|string quartet|rockabye|rendition|music box|piano version|原曲歌手|ガイド無し|ガイドなし|カラオケ|歌っちゃ王|歌ってみた|弾いてみた|オルゴール|カバー|インスト|ピアノver|キー[+\-－＋]?\d)/gi;
+  /(cover|karaoke|tribute|lullaby|8-?bit|backing track|instrumental|made famous|originally performed|in the style of|string quartet|rockabye|rendition|music box|piano version|kidz bop|lullapop|piano guys|piano tribute|twinkle twinkle|orchestral version|acoustic version|原曲歌手|ガイド無し|ガイドなし|カラオケ|歌っちゃ王|歌ってみた|弾いてみた|オルゴール|カバー|インスト|ピアノver|キー[+\-－＋]?\d)/gi;
 
 /** クエリの文字種で iTunes のストアフロントを選ぶ。日本語なら jp、それ以外は us を優先。 */
 export function chooseStorefront(query: string): { primary: 'jp' | 'us'; fallback: 'jp' | 'us' } {

@@ -1,4 +1,5 @@
 import type { ConfidenceLevel, GenreJudgment } from '@shared/types';
+import SourceLamps from '@/components/SourceLamps';
 import { arcadeOf, commentOf, levelOf } from '@/lib/arcade';
 import { toPercent } from '@/lib/format';
 
@@ -76,6 +77,8 @@ export default function Verdict({ judgment }: VerdictProps) {
       </div>
 
       <p className="verdict__comment">{comment}</p>
+
+      <SourceLamps judgment={judgment} />
     </section>
   );
 }

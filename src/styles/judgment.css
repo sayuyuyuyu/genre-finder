@@ -782,3 +782,54 @@
     flex: 1;
   }
 }
+
+/* ------------------------- source lamps（判定ランプ） ------------------------- */
+
+.lamps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 22px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--cream-48);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lamp i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(245, 239, 230, 0.14);
+}
+
+.lamp--agree {
+  color: var(--cream-80);
+}
+
+.lamp--agree i {
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(232, 176, 75, 0.7);
+}
+
+.lamp--other i {
+  background: rgba(232, 176, 75, 0.34);
+}
+
+.lamp--failed {
+  color: rgba(210, 120, 96, 0.95);
+}
+
+.lamp--failed i {
+  background: var(--rust);
+}
