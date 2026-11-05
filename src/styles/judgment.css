@@ -628,3 +628,46 @@
   font-size: 8.5px;
   letter-spacing: 0.2em;
 }
+
+/* SPECTRUM の行は押せる（選択すると DATA FEED が絞られる） */
+.spectrum__row {
+  width: 100%;
+  padding: 7px 6px;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.16s var(--ease),
+    color 0.16s var(--ease);
+}
+
+.spectrum__row:hover {
+  background: rgba(245, 239, 230, 0.04);
+}
+
+.spectrum__row:hover .spectrum__label {
+  color: var(--cream);
+}
+
+.spectrum__row.is-active {
+  background: rgba(232, 176, 75, 0.07);
+}
+
+.spectrum__row.is-active .spectrum__label {
+  color: var(--amber);
+}
+
+.spectrum__row.is-active .spectrum__bar i {
+  background: var(--amber);
+}
+
+.spectrum__row.is-active .spectrum__value {
+  color: var(--amber);
+}
+
+.feed__head .feed__filter {
+  color: var(--amber);
+  letter-spacing: 0.16em;
+}

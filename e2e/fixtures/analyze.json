@@ -12,7 +12,9 @@
       "sourceId": "6813343186",
       "rawGenre": "Soundtrack",
       "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ff/9d/27/ff9d270c-81b2-df99-80f5-5b87048ae88f/mzaf_16037815512034579723.plus.aac.p.m4a",
-      "links": { "itunes": "https://music.apple.com/us/album/megalovania/6813342945?i=6813343186" }
+      "links": {
+        "itunes": "https://music.apple.com/us/album/megalovania/6813342945?i=6813343186"
+      }
     },
     "primary": {
       "id": "chiptune",
@@ -21,40 +23,165 @@
       "arcade": "CHIPTUNE",
       "family": "ゲームミュージック",
       "confidence": 0.49,
-      "evidence": []
+      "evidence": [
+        {
+          "source": "musicbrainz",
+          "raw": "chiptune",
+          "canonicalId": "chiptune",
+          "weight": 0.585,
+          "note": "MusicBrainz のアーティストジャンル（投票数 3）"
+        }
+      ]
     },
     "others": [
-      { "id": "game-music", "labelJa": "ゲーム音楽", "labelEn": "Game Music", "arcade": "GAME MUSIC", "family": "ゲームミュージック", "confidence": 0.25, "evidence": [] },
-      { "id": "soundtrack", "labelJa": "サウンドトラック", "labelEn": "Soundtrack", "arcade": "SOUNDTRACK", "family": "サウンドトラック", "confidence": 0.17, "evidence": [] },
-      { "id": "electronic", "labelJa": "エレクトロニック", "labelEn": "Electronic", "arcade": "ELECTRONIC", "family": "エレクトロニック", "confidence": 0.12, "evidence": [] },
-      { "id": "classical", "labelJa": "クラシック", "labelEn": "Classical", "arcade": "SYMPHONIC", "family": "クラシック", "confidence": 0.09, "evidence": [] }
+      {
+        "id": "game-music",
+        "labelJa": "ゲーム音楽",
+        "labelEn": "Game Music",
+        "arcade": "GAME MUSIC",
+        "family": "ゲームミュージック",
+        "confidence": 0.25,
+        "evidence": [
+          {
+            "source": "musicbrainz",
+            "raw": "game soundtrack",
+            "canonicalId": "game-music",
+            "weight": 0.58,
+            "note": "MusicBrainz のアーティストジャンル（投票数 3）"
+          }
+        ]
+      },
+      {
+        "id": "soundtrack",
+        "labelJa": "サウンドトラック",
+        "labelEn": "Soundtrack",
+        "arcade": "SOUNDTRACK",
+        "family": "サウンドトラック",
+        "confidence": 0.17,
+        "evidence": [
+          {
+            "source": "itunes",
+            "raw": "Soundtrack",
+            "canonicalId": "soundtrack",
+            "weight": 0.9,
+            "note": "iTunes の公式ジャンル分類"
+          },
+          {
+            "source": "deezer",
+            "raw": "Films/Games",
+            "canonicalId": "soundtrack",
+            "weight": 0.38,
+            "note": "Deezer のアルバムジャンル"
+          }
+        ]
+      },
+      {
+        "id": "electronic",
+        "labelJa": "エレクトロニック",
+        "labelEn": "Electronic",
+        "arcade": "ELECTRONIC",
+        "family": "エレクトロニック",
+        "confidence": 0.12,
+        "evidence": []
+      },
+      {
+        "id": "classical",
+        "labelJa": "クラシック",
+        "labelEn": "Classical",
+        "arcade": "SYMPHONIC",
+        "family": "クラシック",
+        "confidence": 0.09,
+        "evidence": []
+      }
     ],
     "fineTags": [
-      { "name": "chiptune", "count": 3, "source": "musicbrainz" },
-      { "name": "16-bit", "count": 1, "source": "musicbrainz" },
-      { "name": "deltarune", "count": 1, "source": "musicbrainz" },
-      { "name": "midi", "count": 1, "source": "musicbrainz" }
+      {
+        "name": "chiptune",
+        "count": 3,
+        "source": "musicbrainz"
+      },
+      {
+        "name": "16-bit",
+        "count": 1,
+        "source": "musicbrainz"
+      },
+      {
+        "name": "deltarune",
+        "count": 1,
+        "source": "musicbrainz"
+      },
+      {
+        "name": "midi",
+        "count": 1,
+        "source": "musicbrainz"
+      }
     ],
     "evidence": [
-      { "source": "musicbrainz", "raw": "chiptune", "canonicalId": "chiptune", "weight": 0.585, "note": "MusicBrainz のアーティストジャンル（投票数 3）" },
-      { "source": "musicbrainz", "raw": "game soundtrack", "canonicalId": "game-music", "weight": 0.58, "note": "MusicBrainz のアーティストジャンル（投票数 3）" },
-      { "source": "itunes", "raw": "Soundtrack", "canonicalId": "soundtrack", "weight": 0.9, "note": "iTunes の公式ジャンル分類" },
-      { "source": "deezer", "raw": "Films/Games", "canonicalId": "soundtrack", "weight": 0.38, "note": "Deezer のアルバムジャンル" }
+      {
+        "source": "musicbrainz",
+        "raw": "chiptune",
+        "canonicalId": "chiptune",
+        "weight": 0.585,
+        "note": "MusicBrainz のアーティストジャンル（投票数 3）"
+      },
+      {
+        "source": "musicbrainz",
+        "raw": "game soundtrack",
+        "canonicalId": "game-music",
+        "weight": 0.58,
+        "note": "MusicBrainz のアーティストジャンル（投票数 3）"
+      },
+      {
+        "source": "itunes",
+        "raw": "Soundtrack",
+        "canonicalId": "soundtrack",
+        "weight": 0.9,
+        "note": "iTunes の公式ジャンル分類"
+      },
+      {
+        "source": "deezer",
+        "raw": "Films/Games",
+        "canonicalId": "soundtrack",
+        "weight": 0.38,
+        "note": "Deezer のアルバムジャンル"
+      }
     ],
-    "sourcesUsed": ["itunes", "deezer", "musicbrainz"],
+    "sourcesUsed": [
+      "itunes",
+      "deezer",
+      "musicbrainz"
+    ],
     "failedSources": [],
     "confidence": "medium",
     "workTitle": "UNDERTALE",
     "explanation": "MusicBrainz は「chiptune」、iTunes / Apple Music は「Soundtrack」と分類しています。総合してCHIPTUNEと判断しました（一致度 49%）。",
-    "caveats": ["iTunes は「Soundtrack」としか分類していません。"],
+    "caveats": [
+      "iTunes は「Soundtrack」としか分類していません。"
+    ],
     "genreInfo": {
       "description": "ファミコンや PC の音源で作られた、ピコピコした音のジャンル。",
       "tagline": "ピコピコ。耳が喜ぶやつ。",
       "related": [
-        { "id": "fm-synth", "labelJa": "FM音源", "arcade": "FM SYNTH" },
-        { "id": "game-music", "labelJa": "ゲーム音楽", "arcade": "GAME MUSIC" },
-        { "id": "electronic", "labelJa": "エレクトロニック", "arcade": "ELECTRONIC" },
-        { "id": "synth-pop", "labelJa": "シンセポップ", "arcade": "SYNTH POP" }
+        {
+          "id": "fm-synth",
+          "labelJa": "FM音源",
+          "arcade": "FM SYNTH"
+        },
+        {
+          "id": "game-music",
+          "labelJa": "ゲーム音楽",
+          "arcade": "GAME MUSIC"
+        },
+        {
+          "id": "electronic",
+          "labelJa": "エレクトロニック",
+          "arcade": "ELECTRONIC"
+        },
+        {
+          "id": "synth-pop",
+          "labelJa": "シンセポップ",
+          "arcade": "SYNTH POP"
+        }
       ]
     }
   },

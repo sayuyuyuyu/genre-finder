@@ -127,6 +127,22 @@ async function run() {
     if (mode === 'mock') {
       const work = await page.locator('.verdict__work').count();
       check('judgment: ゲーム作品名が出る', work === 1, `${work} 個`);
+
+      // SPECTRUM を押すと DATA FEED がそのジャンルの根拠に絞られる
+      const allRows = await page.locator('.feed__row').count();
+      await page.locator('.spectrum__row').nth(1).click();
+      await page.waitForTimeout(100);
+      const filteredRows = await page.locator('.feed__row').count();
+      const filterLabel = (await page.locator('.feed__filter').innerText()).trim();
+      check(
+        'spectrum: 選択で DATA FEED が絞られる',
+        allRows === 4 && filteredRows === 1 && filterLabel === 'GAME MUSIC',
+        `${allRows} → ${filteredRows} / ${filterLabel}`,
+      );
+      await page.locator('.judgment').screenshot({ path: join(artifacts, '11-spectrum-filter.png') });
+      await page.locator('.spectrum__row').nth(1).click();
+      await page.waitForTimeout(100);
+      check('spectrum: もう一度押すと全体に戻る', (await page.locator('.feed__row').count()) === 4);
     }
 
     // リンク貼り付け

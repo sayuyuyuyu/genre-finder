@@ -1,4 +1,5 @@
-import type { GenreJudgment } from '@shared/types';
+import { useEffect, useState } from 'react';
+import type { GenreJudgment, GenreScore } from '@shared/types';
 import DataFeed from '@/components/DataFeed';
 import { FineTags, RelatedGenres } from '@/components/GenreChips';
 import PreviewButton from '@/components/PreviewButton';
@@ -6,6 +7,7 @@ import Spectrum from '@/components/Spectrum';
 import TrackArtwork from '@/components/TrackArtwork';
 import Verdict from '@/components/Verdict';
 import { usePreview } from '@/hooks/usePreview';
+import { arcadeOf } from '@/lib/arcade';
 import { externalSearchLinks, trackMeta } from '@/lib/format';
 
 interface JudgmentViewProps {
@@ -29,6 +31,14 @@ export default function JudgmentView({
   const meta = trackMeta(track);
   const links = externalSearchLinks(track);
   const preview = usePreview(track.previewUrl);
+
+  // SPECTRUM の行を選ぶと DATA FEED がそのジャンルの根拠だけになる
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  useEffect(() => setSelectedId(null), [judgment]);
+  const scores = [primary, ...others].filter((score): score is GenreScore => Boolean(score));
+  const selected = scores.find((score) => score.id === selectedId) ?? null;
+  const feedEvidence = selected ? selected.evidence : evidence;
+  const feedLabel = selected ? arcadeOf(selected) : null;
   const failed = failedSources.length > 0;
 
   return (
@@ -78,12 +88,17 @@ export default function JudgmentView({
 
         <div className="judgment__verdict" title={explanation}>
           <Verdict judgment={judgment} />
-          <Spectrum primary={primary} others={others} />
+          <Spectrum
+            primary={primary}
+            others={others}
+            selectedId={selectedId}
+            onSelect={(id) => setSelectedId((prev) => (prev === id ? null : id))}
+          />
         </div>
       </div>
 
       <div className="judgment__lower">
-        <DataFeed evidence={evidence} />
+        <DataFeed evidence={feedEvidence} filterLabel={feedLabel} />
         <div className="judgment__side">
           <FineTags tags={fineTags} />
           <RelatedGenres related={genreInfo?.related ?? []} />

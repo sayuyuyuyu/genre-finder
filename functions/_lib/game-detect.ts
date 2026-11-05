@@ -37,14 +37,21 @@ const GAME_RULES: GameRule[] = [
     id: 'touhou-arrange',
     weight: 0.75,
     pattern:
-      /東方プロジェクト|東方アレンジ|東方|touhou|bad apple|少女綺想曲|魔理沙|u\.n\. owen|ネクロファンタジア|亡き王女/i,
+      /東方プロジェクト|東方アレンジ|東方|とうほう|touhou|bad apple|少女綺想曲|魔理沙|u\.n\. owen|ネクロファンタジア|亡き王女|例大祭|博麗神社|紅楼夢|sound holic|iosys|eastnewsound|silver forest|幽閉サテライト|c-clays|舞風|digital wing|豚乙女|alstroemeria records|上海アカデミー|上海アリス|アリスシャッハ|凋叶棕/i,
+  },
+  // 同人イベント（M3 / コミケ / C9x / サンクリ）。"M3" 単体は誤検出するので年・季節付きのみ
+  {
+    id: 'game-music',
+    weight: 0.6,
+    pattern:
+      /m3[-‐\s]?(?:19|20)\d{2}|m3\s*(?:春|秋)|コミックマーケット|コミケ|\bc9[0-9]\b|サンクリ|(?:東方|同人|音ゲー|ゲーム).{0,12}\bbooth\b|\bbooth\b.{0,12}(?:東方|同人|音ゲー|ゲーム)/i,
   },
   // 音ゲー（BMS / IIDX / DDR など）
   {
     id: 'rhythm-game',
     weight: 0.75,
     pattern:
-      /beatmania|\biidx\b|\bbms\b|\bddr\b|dance dance revolution|音ゲー|リズムゲーム|rhythm game|\bosu!\b|太鼓の達人|jubeat|maimai|chunithm|guitar freaks|drummania/i,
+      /beatmania|\biidx\b|\bbms\b|\bddr\b|dance dance revolution|音ゲー|リズムゲーム|rhythm game|\bosu!\b|太鼓の達人|jubeat|maimai|chunithm|guitar freaks|drummania|sound voltex|\bsdvx\b|プロセカ|プロジェクトセカイ|アイマス|アイドルマスター|ラブライブ|love live|ban ?g dream|bang dream|バンドリ|d4dj|groove coaster|ノスタルジア|オンゲキ|\bwacca\b|ポップン|popn music|museca|dance evolution|arcaea|deemo|cytus/i,
   },
   // チップチューン（8bit / ファミコン）
   {
@@ -122,8 +129,19 @@ export const GAME_WORKS: GameWork[] = [
   { pattern: /beatmania|iidx/i, title: 'beatmania IIDX' },
   // BMS は IIDX 系の譜面フォーマット
   { pattern: /\bbms\b/i, title: 'beatmania IIDX' },
+  { pattern: /project sekai|プロジェクトセカイ|プロセカ/i, title: 'プロジェクトセカイ' },
   {
-    pattern: /touhou|東方|とうほう|bad apple|u\.n\. owen|少女綺想曲|魔理沙|ネクロファンタジア|亡き王女/i,
+    pattern:
+      /idol ?master|アイドルマスター|アイマス|デレステ|デレマス|ミリオンライブ|シャニマス|学園アイドルマスター/i,
+    title: 'アイドルマスター',
+  },
+  { pattern: /love live|ラブライブ/i, title: 'ラブライブ！' },
+  { pattern: /ban ?g dream|バンドリ/i, title: 'BanG Dream!' },
+  { pattern: /d4dj/i, title: 'D4DJ' },
+  { pattern: /sound voltex|\bsdvx\b/i, title: 'SOUND VOLTEX' },
+  {
+    pattern:
+      /touhou|東方|とうほう|bad apple|u\.n\. owen|少女綺想曲|魔理沙|ネクロファンタジア|亡き王女|例大祭|博麗神社|紅楼夢|sound holic|iosys|eastnewsound|silver forest|幽閉サテライト|c-clays|舞風|digital wing|豚乙女|alstroemeria records|上海アカデミー|上海アリス|アリスシャッハ|凋叶棕/i,
     title: '東方Project',
   },
   { pattern: /pop'?n music|ポップンミュージック/i, title: "pop'n music" },
