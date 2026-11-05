@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { GenreJudgment, GenreScore } from '@shared/types';
+import AcousticPanel from '@/components/AcousticPanel';
 import DataFeed from '@/components/DataFeed';
 import { FineTags, RelatedGenres } from '@/components/GenreChips';
 import PreviewButton from '@/components/PreviewButton';
@@ -150,6 +151,7 @@ export default function JudgmentView({
             selectedId={selectedId}
             onSelect={(id) => setSelectedId((prev) => (prev === id ? null : id))}
           />
+          <AcousticPanel previewUrl={track.previewUrl} />
         </div>
       </div>
 

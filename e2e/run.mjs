@@ -50,6 +50,43 @@ function makeTaggedMp3(frames) {
   return Buffer.concat([header, frameData, Buffer.alloc(2048)]);
 }
 
+
+/** テスト用: 4つ打ちの WAV（モノラル16bit）を作る。 */
+function makeFourOnFloorWav(bpm = 128, seconds = 8, sampleRate = 22050) {
+  const frames = Math.round(seconds * sampleRate);
+  const samples = new Float32Array(frames);
+  const beatSeconds = 60 / bpm;
+  const kickLength = Math.round(0.12 * sampleRate);
+  for (let beat = 0; beat < Math.ceil(seconds / beatSeconds); beat += 1) {
+    const start = Math.round(beat * beatSeconds * sampleRate);
+    for (let i = 0; i < kickLength && start + i < frames; i += 1) {
+      const t = i / sampleRate;
+      samples[start + i] +=
+        0.9 * Math.sin(2 * Math.PI * (50 + 90 * Math.exp(-t * 30)) * t) * Math.exp(-t * 22);
+    }
+  }
+  const dataSize = frames * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(dataSize, 40);
+  for (let i = 0; i < frames; i += 1) {
+    const value = Math.max(-1, Math.min(1, samples[i]));
+    buffer.writeInt16LE(Math.round(value * 32767), 44 + i * 2);
+  }
+  return buffer;
+}
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function installMocks(page) {
@@ -70,6 +107,12 @@ async function installMocks(page) {
     await route.fulfill({ json: resolve });
   });
   await page.route('**/api/genres**', (route) => route.fulfill({ json: genres }));
+
+  // プレビュー音源はテスト用の4つ打ちWAVを返す（自作の音響解析の検証）
+  const previewWav = makeFourOnFloorWav();
+  await page.route('**/audio-ssl.itunes.apple.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'audio/wav', body: previewWav }),
+  );
 }
 
 /** 画像の読み込みを待つ。間に合わなくてもスクショは撮る。 */
@@ -340,6 +383,20 @@ async function run() {
       analyzeUrls.some((url) => url.includes('genreHint=')),
       analyzeUrls[0] ?? '',
     );
+
+    // 自作の音響解析（ACOUSTIC）
+    await page.waitForSelector('.acoustic__row', { timeout: 15000 });
+    const acousticStats = await page.locator('.acoustic__stats').innerText();
+    const acousticLabels = await page.locator('.acoustic__label').allInnerTexts();
+    const detectedBpm = Number(/(\d+) BPM/.exec(acousticStats)?.[1] ?? 0);
+    check(
+      'acoustic: 自作解析でBPMとジャンル票が出る',
+      detectedBpm >= 118 &&
+        detectedBpm <= 140 &&
+        acousticLabels.some((label) => ['HOUSE', 'DANCE', 'TECHNO', 'TRANCE'].includes(label)),
+      `${acousticStats} / ${acousticLabels.join(',')}`,
+    );
+    await page.screenshot({ path: join(artifacts, '24-acoustic.png'), fullPage: true });
 
     const lampCount = await page.locator('.lamp').count();
     const agreeCount = await page.locator('.lamp--agree').count();
