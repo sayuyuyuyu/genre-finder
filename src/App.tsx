@@ -12,10 +12,13 @@ import { JudgmentSkeleton, ResultsSkeleton } from '@/components/Skeletons';
 import { useGenreFinder } from '@/hooks/useGenreFinder';
 import { useRecent } from '@/hooks/useRecent';
 import { arcadeOf } from '@/lib/arcade';
+import { readSharedQuery, sharedQueryString } from '@/lib/shared-query';
 
 export default function App() {
   const finder = useGenreFinder();
   const recent = useRecent();
+  // 共有URL（?t=曲名&a=アーティスト）から開かれたら、その場で判定する
+  const initialShare = useRef(readSharedQuery(window.location.search)).current;
   const [input, setInput] = useState('');
   const stageRef = useRef<HTMLDivElement>(null);
   const { phase, judgment, tracks, error, selectedTrack, readingFile } = finder;
@@ -55,6 +58,35 @@ export default function App() {
       at: Date.now(),
     });
   }, [phase, judgment, recent.add]);
+
+  useEffect(() => {
+    if (!initialShare) return;
+    void finder.analyzeTrack({
+      id: `share:${initialShare.title}:${initialShare.artist ?? ''}`,
+      title: initialShare.title,
+      artist: initialShare.artist ?? '',
+      source: 'itunes',
+      sourceId: '',
+    });
+    // マウント時のみ実行する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 判定した曲は URL で共有できるようにする
+  useEffect(() => {
+    if (phase === 'judgment' && judgment) {
+      window.history.replaceState(
+        null,
+        '',
+        sharedQueryString({
+          title: judgment.track.title,
+          artist: judgment.track.artist || undefined,
+        }),
+      );
+    } else if (phase === 'idle') {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [phase, judgment]);
 
   function handleSearch() {
     finder.search(input);

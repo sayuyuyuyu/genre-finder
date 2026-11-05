@@ -107,6 +107,12 @@ async function run() {
     await page.screenshot({ path: join(artifacts, '06-recent.png'), fullPage: true });
     check('recent: 履歴が残る', recentCount >= 1, `${recentCount} 件`);
 
+    // 共有URL（?t=&a=）で開く
+    await page.goto(`${base}/?t=Megalovania&a=Toby%20Fox`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
+    check('share: URL から直接判定できる', (await page.locator('.verdict__arcade').innerText()).trim().length > 0);
+    check('share: 判定後に URL が共有形式になる', page.url().includes('?t='));
+
     // モバイル
     const mobile = await browser.newPage({
       viewport: { width: 390, height: 844 },
