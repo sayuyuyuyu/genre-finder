@@ -54,9 +54,8 @@ export default function SearchPanel({
         <span className="micro" aria-hidden="true">
           SEARCH
         </span>
-        <label className="search__label" htmlFor="song-query">
-          曲名・アーティスト、または
-          <span className="search__label-sub">Spotify / YouTube のリンク</span>
+        <label className="sr-only" htmlFor="song-query">
+          曲名・アーティスト、または Spotify / YouTube のリンク
         </label>
         <span className="micro search__enter" aria-hidden="true">
           ENTER
@@ -87,7 +86,6 @@ export default function SearchPanel({
           autoCorrect="off"
           spellCheck={false}
           enterKeyHint="search"
-          aria-describedby="search-footnote"
         />
         <button type="submit" className="btn btn--primary btn--search">
           {searching ? (
@@ -100,9 +98,6 @@ export default function SearchPanel({
           )}
         </button>
       </div>
-      <p id="search-footnote" className="search__footnote">
-        曲名だけでも、「曲名 アーティスト」でも。リンクは貼り付けるだけで読み取ります。
-      </p>
       {detected && (
         <p className="search__detected" role="note">
           <span className="micro micro--amber">LINK DETECTED</span>

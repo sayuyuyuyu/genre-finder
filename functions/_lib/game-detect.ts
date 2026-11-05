@@ -91,6 +91,75 @@ const GAME_RULES: GameRule[] = [
   { id: 'vocaloid', weight: 0.55, pattern: /vocaloid|ボカロ|ボーカロイド|初音ミク|hatsune miku/i },
 ];
 
+export interface GameWork {
+  pattern: RegExp;
+  title: string;
+}
+
+/**
+ * ゲーム作品名の対応表。作品固有の語だけを対象にする（誤検出防止）。
+ * 上から順に評価し、最初に一致した作品名を返す。
+ */
+export const GAME_WORKS: GameWork[] = [
+  { pattern: /undertale/i, title: 'UNDERTALE' },
+  { pattern: /deltarune/i, title: 'DELTARUNE' },
+  { pattern: /chrono trigger|クロノ・?トリガー/i, title: 'CHRONO TRIGGER' },
+  { pattern: /final fantasy|ファイナルファンタジー/i, title: 'FINAL FANTASY' },
+  { pattern: /dragon quest|ドラゴンクエスト|ドラクエ/i, title: 'DRAGON QUEST' },
+  { pattern: /the legend of zelda|ゼルダの伝説|ゼルダ/i, title: 'ZELDA' },
+  { pattern: /super mario|スーパーマリオ|マリオ/i, title: 'SUPER MARIO' },
+  { pattern: /pok[eé]mon|ポケットモンスター|ポケモン/i, title: 'ポケモン' },
+  { pattern: /kirby|カービィ/i, title: 'KIRBY' },
+  { pattern: /sonic the hedgehog|ソニック・?ザ・?ヘッジホッグ|ソニック/i, title: 'SONIC THE HEDGEHOG' },
+  { pattern: /mega ?man|ロックマン/i, title: 'MEGA MAN' },
+  { pattern: /castlevania|悪魔城ドラキュラ|悪魔城/i, title: 'CASTLEVANIA' },
+  { pattern: /kingdom hearts|キングダムハーツ/i, title: 'KINGDOM HEARTS' },
+  { pattern: /\bnier\b|ニーア/i, title: 'NIER' },
+  { pattern: /persona|ペルソナ/i, title: 'PERSONA' },
+  { pattern: /monster hunter|モンスターハンター|モンハン/i, title: 'MONSTER HUNTER' },
+  { pattern: /splatoon|スプラトゥーン/i, title: 'SPLATOON' },
+  { pattern: /xenoblade|ゼノブレイド/i, title: 'XENOBLADE' },
+  { pattern: /beatmania|iidx/i, title: 'beatmania IIDX' },
+  // BMS は IIDX 系の譜面フォーマット
+  { pattern: /\bbms\b/i, title: 'beatmania IIDX' },
+  {
+    pattern: /touhou|東方|とうほう|bad apple|u\.n\. owen|少女綺想曲|魔理沙|ネクロファンタジア|亡き王女/i,
+    title: '東方Project',
+  },
+  { pattern: /pop'?n music|ポップンミュージック/i, title: "pop'n music" },
+  { pattern: /dance dance revolution|\bddr\b/i, title: 'DDR' },
+  { pattern: /太鼓の達人|taiko no tatsujin/i, title: '太鼓の達人' },
+  { pattern: /\bosu!\b/i, title: 'osu!' },
+  { pattern: /maimai/i, title: 'maimai' },
+  { pattern: /chunithm/i, title: 'CHUNITHM' },
+  { pattern: /jubeat/i, title: 'jubeat' },
+  { pattern: /arcaea/i, title: 'Arcaea' },
+  { pattern: /deemo/i, title: 'DEEMO' },
+  { pattern: /cytus/i, title: 'Cytus' },
+  { pattern: /minecraft/i, title: 'MINECRAFT' },
+  { pattern: /\bdoom\b/i, title: 'DOOM' },
+  { pattern: /\bhalo\b/i, title: 'HALO' },
+  { pattern: /genshin impact|原神/i, title: '原神' },
+  { pattern: /ace attorney|逆転裁判/i, title: '逆転裁判' },
+  { pattern: /professor layton|レイトン教授/i, title: 'レイトン教授' },
+  { pattern: /ひぐらしのなく頃に|higurashi/i, title: 'ひぐらしのなく頃に' },
+  { pattern: /umineko|うみねこのなく頃に/i, title: 'うみねこのなく頃に' },
+  { pattern: /steins;?gate|シュタインズ・?ゲート/i, title: 'STEINS;GATE' },
+  { pattern: /fate\/?grand order|\bfgo\b/i, title: 'Fate/Grand Order' },
+];
+
+/** 曲名・アルバム名・タグからゲーム作品名を検出する。見つからなければ null。 */
+export function detectGameWork(fields: GameDetectionField[]): string | null {
+  for (const field of fields) {
+    const text = field.text?.normalize('NFKC');
+    if (!text) continue;
+    for (const work of GAME_WORKS) {
+      if (work.pattern.test(text)) return work.title;
+    }
+  }
+  return null;
+}
+
 /** 検出結果を返す。ゲーム固有語が無ければ空配列。 */
 export function detectGameMusic(fields: GameDetectionField[]): GameDetection[] {
   const best = new Map<string, GameDetection>();

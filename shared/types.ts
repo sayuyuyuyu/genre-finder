@@ -96,6 +96,11 @@ export interface GenreJudgment {
   explanation: string;
   /** 注意書き（例: "iTunes はポップとだけ分類しています"） */
   caveats: string[];
+  /**
+   * ゲーム音楽と判定したときの作品名（例: "UNDERTALE", "東方Project", "beatmania IIDX"）。
+   * 検出できたときだけ入る。UI ではジャンル名の下に小さく出す。
+   */
+  workTitle?: string;
   /** ジャンルの代表曲・関連ジャンルなど、UI の補助情報。 */
   genreInfo?: {
     description: string;

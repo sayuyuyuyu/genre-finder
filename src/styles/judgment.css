@@ -609,3 +609,22 @@
 .preview.is-playing .preview__track {
   stroke: rgba(232, 176, 75, 0.28);
 }
+
+.verdict__work {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 14px;
+  color: var(--amber);
+  font-family: var(--font-arcade);
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.verdict__work-label {
+  color: var(--cream-32);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
+}

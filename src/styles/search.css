@@ -79,13 +79,60 @@
   color: var(--amber);
 }
 
-.hero__lead {
+/* 入口は文章ではなく3つのモードで示す */
+.modes {
   position: relative;
-  max-width: 560px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px clamp(18px, 3vw, 30px);
   margin-top: clamp(20px, 3vw, 28px);
+}
+
+.modes__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cream-48);
+}
+
+.modes__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--amber);
+}
+
+.modes__icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.modes__label {
   color: var(--cream-64);
-  font-size: 14px;
-  line-height: 2.05;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+}
+
+.modes__text {
+  color: var(--cream-32);
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .modes {
+    gap: 8px 16px;
+  }
+
+  .modes__text {
+    display: none;
+  }
 }
 
 /* ---------------------------------- search -------------------------------- */
@@ -107,11 +154,6 @@
   margin-bottom: 10px;
 }
 
-.search__label {
-  color: var(--cream-48);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-}
 
 .search__enter {
   margin-left: auto;
@@ -167,12 +209,6 @@
   color: var(--cream-32);
 }
 
-.search__footnote {
-  margin-top: 10px;
-  color: var(--cream-48);
-  font-size: 11.5px;
-  letter-spacing: 0.02em;
-}
 
 .search__detected {
   display: flex;

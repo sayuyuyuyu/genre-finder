@@ -1,31 +1,31 @@
 {
-  "query": { "title": "夜に駆ける YOASOBI" },
+  "query": { "title": "Megalovania Toby Fox" },
   "tracks": [
     {
-      "id": "itunes:1490256995",
-      "title": "夜に駆ける",
-      "artist": "YOASOBI",
-      "album": "夜に駆ける - Single",
-      "year": 2019,
-      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/fe/58/79/fe58795c-1628-230a-9ffe-300c04b6627c/194491717186.jpg/600x600bb.jpg",
-      "durationMs": 261013,
+      "id": "itunes:6813343186",
+      "title": "Megalovania",
+      "artist": "Toby Fox",
+      "album": "Undertale Soundtrack",
+      "year": 2015,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music221/v4/68/72/02/6872023b-49d0-1a44-e824-c898bb62c7a3/841787181533.png/600x600bb.jpg",
+      "durationMs": 156000,
       "source": "itunes",
-      "sourceId": "1490256995",
-      "rawGenre": "J-Pop",
-      "links": { "itunes": "https://music.apple.com/jp/album/1490256978?i=1490256995" },
+      "sourceId": "6813343186",
+      "rawGenre": "Soundtrack",
+      "previewUrl": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/ff/9d/27/ff9d270c-81b2-df99-80f5-5b87048ae88f/mzaf_16037815512034579723.plus.aac.p.m4a",
+      "links": { "itunes": "https://music.apple.com/us/album/megalovania/6813342945?i=6813343186" },
       "score": 1
     },
     {
-      "id": "deezer:824731152",
-      "title": "夜に駆ける",
-      "artist": "YOASOBI",
-      "album": "THE BOOK",
-      "year": 2021,
-      "artworkUrl": "https://cdn-images.dzcdn.net/images/cover/8d1a1c8b4a0b4c1d5f6e7a8b9c0d1e2f/250x250-000000-80-0-0.jpg",
-      "durationMs": 261000,
+      "id": "deezer:880000001",
+      "title": "Megalovania",
+      "artist": "Toby Fox",
+      "album": "UNDERTALE Soundtrack",
+      "year": 2015,
+      "durationMs": 156000,
       "source": "deezer",
-      "sourceId": "824731152",
-      "score": 0.82
+      "sourceId": "880000001",
+      "score": 0.8
     }
   ],
   "warnings": []

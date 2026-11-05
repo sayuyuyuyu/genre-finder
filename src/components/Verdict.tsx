@@ -27,6 +27,13 @@ export default function Verdict({ judgment }: VerdictProps) {
         {arcade}
       </h2>
 
+      {judgment.workTitle && (
+        <p className="verdict__work">
+          <span className="verdict__work-label">WORK</span>
+          {judgment.workTitle}
+        </p>
+      )}
+
       <p className="verdict__meta">
         {primary ? (
           <>

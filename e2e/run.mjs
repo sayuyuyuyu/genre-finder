@@ -90,6 +90,10 @@ async function run() {
     check('judgment: コメントが 1 行', comment.length > 0 && comment.length < 60);
     const preview = await page.locator('.preview').count();
     check('judgment: 試聴ボタンがある', preview === 1, `${preview} 個`);
+    if (mode === 'mock') {
+      const work = await page.locator('.verdict__work').count();
+      check('judgment: ゲーム作品名が出る', work === 1, `${work} 個`);
+    }
 
     // リンク貼り付け
     await page.getByRole('button', { name: /別の曲/ }).first().click();

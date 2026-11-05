@@ -32,7 +32,7 @@ import { itunesLookup, itunesSearch, type ItunesTrack } from './itunes';
 import { lastfmTopTags } from './lastfm';
 import { mbArtistGenres, mbRecordingTags, mbSearchRecording, type MbRecordingMatch, type MbTag } from './musicbrainz';
 import { deezerToCandidate, itunesToCandidate } from './candidates';
-import { detectGameMusic, type GameDetectionField } from './game-detect';
+import { detectGameMusic, detectGameWork, type GameDetectionField } from './game-detect';
 
 export interface AnalyzeInput {
   title: string;
@@ -482,6 +482,13 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     ),
   ];
   const { primary, others } = aggregateGenres(evidence, { priorityIds: priorityGameIds });
+  // ゲーム音楽と判定した曲だけ作品名を出す（それ以外はキー自体を出さない）
+  const gameWorkIds = new Set([...gameSubgenreIds, 'game-music']);
+  const isGameJudgment =
+    primary?.family === 'ゲームミュージック' ||
+    evidence.some((item) => Boolean(item.canonicalId && gameWorkIds.has(item.canonicalId)));
+  const detectedWork = detectGameWork(detectionFields);
+  const workTitle = isGameJudgment ? detectedWork ?? undefined : undefined;
   const matchedCount = evidence.filter((item) => item.canonicalId).length;
   const level = confidenceLevel(primary?.confidence ?? 0, matchedCount);
 
@@ -557,6 +564,7 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     explanation,
     caveats,
     ...(genreInfo ? { genreInfo } : {}),
+    ...(workTitle ? { workTitle } : {}),
   };
 
   return { judgment, warnings };

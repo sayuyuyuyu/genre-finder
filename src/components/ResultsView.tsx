@@ -29,9 +29,7 @@ export default function ResultsView({
             「{displayQuery(queryLabel)}」
           </h2>
           <p className="stage__sub">
-            {tracks.length > 0
-              ? `${tracks.length}曲の候補が見つかりました。曲を選ぶとジャンルを判定します。`
-              : '条件に合う曲が見つかりませんでした。'}
+            {tracks.length > 0 ? `${tracks.length} 曲 · 選ぶと判定` : '候補なし'}
           </p>
         </div>
         <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>

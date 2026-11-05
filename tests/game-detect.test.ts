@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectGameMusic, type GameDetectionField } from '../functions/_lib/game-detect';
+import { detectGameMusic, detectGameWork, type GameDetectionField } from '../functions/_lib/game-detect';
 
 function field(
   label: string,
@@ -62,5 +62,56 @@ describe('detectGameMusic（ゲーム音楽らしさの検出）', () => {
     const game = detections.filter((d) => d.canonicalId === 'game-music');
     expect(game).toHaveLength(1);
     expect(game[0]?.weight).toBeGreaterThanOrEqual(0.6);
+  });
+});
+
+describe('detectGameWork（ゲーム作品名の検出）', () => {
+  it('Undertale → UNDERTALE', () => {
+    expect(detectGameWork([field('アルバム名', 'Undertale Soundtrack')])).toBe('UNDERTALE');
+  });
+
+  it('東方Project → 東方Project', () => {
+    expect(detectGameWork([field('アルバム名', '東方Project ～ 東方アレンジ集')])).toBe('東方Project');
+  });
+
+  it('Touhou 表記でも 東方Project', () => {
+    expect(detectGameWork([field('アルバム名', 'Touhou Philharmonic Orchestra 1')])).toBe('東方Project');
+  });
+
+  it('beatmania IIDX / BMS → beatmania IIDX', () => {
+    expect(detectGameWork([field('アルバム名', 'beatmania IIDX 20th Anniversary')])).toBe(
+      'beatmania IIDX',
+    );
+    expect(detectGameWork([field('曲名', 'BMS 音ゲーアンセム')])).toBe('beatmania IIDX');
+  });
+
+  it('Deltarune → DELTARUNE', () => {
+    expect(detectGameWork([field('アルバム名', 'DELTARUNE Chapter 2 OST')])).toBe('DELTARUNE');
+  });
+
+  it('Final Fantasy → FINAL FANTASY', () => {
+    expect(detectGameWork([field('アルバム名', 'Final Fantasy VII Remake')])).toBe('FINAL FANTASY');
+  });
+
+  it('ポケモン → ポケモン', () => {
+    expect(detectGameWork([field('アルバム名', 'ポケモン サウンドトラック')])).toBe('ポケモン');
+  });
+
+  it('東方の代表曲名からも 東方Project を推定する', () => {
+    expect(detectGameWork([field('曲名', 'Bad Apple!!')])).toBe('東方Project');
+    expect(detectGameWork([field('曲名', 'U.N. Owen was Her?')])).toBe('東方Project');
+  });
+
+  it('全角・小文字表記も吸収する', () => {
+    expect(detectGameWork([field('アルバム名', 'ＵＮＤＥＲＴＡＬＥ')])).toBe('UNDERTALE');
+    expect(detectGameWork([field('アルバム名', 'undertale soundtrack')])).toBe('UNDERTALE');
+  });
+
+  it('ゲーム作品が無い曲は null', () => {
+    expect(detectGameWork([field('アルバム名', 'Random Access Memories')])).toBeNull();
+    expect(
+      detectGameWork([field('曲名', 'Get Lucky'), field('アーティスト名', 'Daft Punk')]),
+    ).toBeNull();
+    expect(detectGameWork([field('曲名', '夜に駆ける'), field('アーティスト名', 'YOASOBI')])).toBeNull();
   });
 });
