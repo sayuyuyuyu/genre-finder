@@ -22,7 +22,7 @@ const memory = new Map<string, MemoryEntry>();
  * キャッシュのスキーマ版。レスポンスの形やタクソノミーを変えたらここを上げる。
  * デプロイ直後に古いレスポンスが返るのを防ぐ（キーが変わるので前のキャッシュを引かない）。
  */
-export const CACHE_VERSION = 'v12';
+export const CACHE_VERSION = 'v13';
 
 const CACHE_ORIGIN = 'https://genre-finder.internal/__cache/';
 

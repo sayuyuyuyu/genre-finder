@@ -116,3 +116,25 @@ describe('similarity', () => {
     expect(similarity('Get Lucky', '夜に駆ける')).toBeLessThan(0.2);
   });
 });
+
+describe('音ゲー系サブジャンル（追加分）', () => {
+  it('ハッピーハードコア・ハードスタイル・ユーロビート等を正規化できる', () => {
+    expect(normalize('Happy Hardcore')?.id).toBe('happy-hardcore');
+    expect(normalize('ハッピーハードコア')?.id).toBe('happy-hardcore');
+    expect(normalize('Hardstyle')?.id).toBe('hardstyle');
+    expect(normalize('Eurobeat')?.id).toBe('eurobeat');
+    expect(normalize('ユーロビート')?.id).toBe('eurobeat');
+    expect(normalize('Psytrance')?.id).toBe('psytrance');
+    expect(normalize('サイケデリックトランス')?.id).toBe('psytrance');
+    expect(normalize('Breakcore')?.id).toBe('breakcore');
+    expect(normalize('Speedcore')?.id).toBe('speedcore');
+    expect(normalize('Future Bass')?.id).toBe('future-bass');
+  });
+
+  it('hardcore と hardcore punk を混同しない', () => {
+    expect(normalize('Hardcore')?.id).toBe('hardcore');
+    expect(normalize('ハードコア')?.id).toBe('hardcore');
+    expect(normalize('Hardcore Punk')?.id).toBe('punk');
+    expect(normalize('ハードコアパンク')?.id).toBe('punk');
+  });
+});
