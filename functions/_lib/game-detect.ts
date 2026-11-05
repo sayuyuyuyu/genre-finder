@@ -51,7 +51,7 @@ const GAME_RULES: GameRule[] = [
     id: 'rhythm-game',
     weight: 0.75,
     pattern:
-      /beatmania|\biidx\b|\bbms\b|\bddr\b|dance dance revolution|音ゲー|リズムゲーム|rhythm game|\bosu!\b|太鼓の達人|jubeat|maimai|chunithm|guitar freaks|drummania|sound voltex|\bsdvx\b|プロセカ|プロジェクトセカイ|アイマス|アイドルマスター|ラブライブ|love live|ban ?g dream|bang dream|バンドリ|d4dj|groove coaster|ノスタルジア|オンゲキ|\bwacca\b|ポップン|popn music|museca|dance evolution|arcaea|deemo|cytus/i,
+      /beatmania|\biidx\b|\bbms\b|\bddr\b|dance dance revolution|音ゲー|リズムゲーム|rhythm game|\bosu!\b|太鼓の達人|jubeat|maimai|chunithm|guitar freaks|drummania|bemani|sound voltex|\bsdvx\b|プロセカ|プロジェクトセカイ|アイマス|アイドルマスター|ラブライブ|love live|ban ?g dream|bang dream|バンドリ|d4dj|groove coaster|ノスタルジア|オンゲキ|\bwacca\b|ポップン|popn music|museca|dance evolution|arcaea|deemo|cytus/i,
   },
   // チップチューン（8bit / ファミコン）
   {
@@ -129,6 +129,7 @@ export const GAME_WORKS: GameWork[] = [
   { pattern: /beatmania|iidx/i, title: 'beatmania IIDX' },
   // BMS は IIDX 系の譜面フォーマット
   { pattern: /\bbms\b/i, title: 'beatmania IIDX' },
+  { pattern: /bemani/i, title: 'BEMANI' },
   { pattern: /project sekai|プロジェクトセカイ|プロセカ/i, title: 'プロジェクトセカイ' },
   {
     pattern:

@@ -152,6 +152,10 @@ describe('音ゲー・同人イベント/サークルの検出', () => {
     expect(ids([field('アルバム名', 'D4DJ Groovy Mix')])).toContain('rhythm-game');
   });
 
+  it('BEMANI（Bemani Symphony 等）は rhythm-game', () => {
+    expect(ids([field('アルバム名', 'Bemani Symphony Original Soundtrack')])).toContain('rhythm-game');
+  });
+
   it('一般曲は音ゲー/同人として誤検出しない', () => {
     expect(ids([field('アルバム名', 'Random Access Memories')])).toEqual([]);
     expect(ids([field('曲名', '夜に駆ける'), field('アーティスト名', 'YOASOBI')])).toEqual([]);
@@ -176,6 +180,10 @@ describe('音ゲー・同人作品名の検出', () => {
     expect(detectGameWork([field('アルバム名', 'D4DJ Groovy Mix')])).toBe('D4DJ');
     expect(detectGameWork([field('アルバム名', 'SOUND VOLTEX IV')])).toBe('SOUND VOLTEX');
     expect(detectGameWork([field('アルバム名', 'SDVX 楽曲集')])).toBe('SOUND VOLTEX');
+  });
+
+  it('Bemani 系の作品名を返す', () => {
+    expect(detectGameWork([field('アルバム名', 'Bemani Symphony Original Soundtrack')])).toBe('BEMANI');
   });
 
   it('同人イベント名だけでは作品名を出さない', () => {
