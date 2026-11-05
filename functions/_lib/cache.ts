@@ -18,6 +18,12 @@ interface MemoryEntry {
 const MEMORY_LIMIT = 500;
 const memory = new Map<string, MemoryEntry>();
 
+/**
+ * キャッシュのスキーマ版。レスポンスの形やタクソノミーを変えたらここを上げる。
+ * デプロイ直後に古いレスポンスが返るのを防ぐ（キーが変わるので前のキャッシュを引かない）。
+ */
+export const CACHE_VERSION = 'v3';
+
 const CACHE_ORIGIN = 'https://genre-finder.internal/__cache/';
 
 interface CacheLike {
@@ -31,7 +37,7 @@ function cacheStore(): CacheLike | undefined {
 }
 
 function cacheRequest(key: string): Request {
-  return new Request(`${CACHE_ORIGIN}${encodeURIComponent(key)}`);
+  return new Request(`${CACHE_ORIGIN}${CACHE_VERSION}/${encodeURIComponent(key)}`);
 }
 
 function remember(key: string, value: unknown, ttlSeconds: number): void {
