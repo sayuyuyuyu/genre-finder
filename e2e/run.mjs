@@ -37,6 +37,15 @@ async function installMocks(page) {
   await page.route('**/api/resolve**', (route) => route.fulfill({ json: resolve }));
 }
 
+/** 画像の読み込みを待つ。間に合わなくてもスクショは撮る。 */
+async function settleImages(page, timeout = 8000) {
+  await page
+    .waitForFunction(() => Array.from(document.images).every((image) => image.complete), undefined, {
+      timeout,
+    })
+    .catch(() => {});
+}
+
 async function noHorizontalOverflow(page) {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 }
@@ -64,7 +73,15 @@ async function run() {
     await page.locator('input[type="search"], input[type="text"]').first().fill('夜に駆ける YOASOBI');
     await page.keyboard.press('Enter');
     await page.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 25000 });
+    await settleImages(page);
     const resultCount = await page.locator('button.track').count();
+    check(
+      'results: ジャンルが大文字で出る',
+      /^[A-Z0-9&'.\- ]+$/.test(
+        ((await page.locator('.track').first().locator('.track__arcade').innerText().catch(() => '')) || '')
+          .trim(),
+      ),
+    );
     await page.screenshot({ path: join(artifacts, '02-results.png'), fullPage: true });
     check('results: 候補が出る', resultCount > 0, `${resultCount} 件`);
     check('results: 先頭が強調される', (await page.locator('.badge').count()) === 1);
@@ -72,11 +89,7 @@ async function run() {
     // 判定
     await page.locator('button.track').first().click();
     await page.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
-    await page.waitForFunction(
-      () => Array.from(document.images).every((image) => image.complete),
-      undefined,
-      { timeout: 15000 },
-    );
+    await settleImages(page);
     const arcade = (await page.locator('.verdict__arcade').innerText()).trim();
     const level = (await page.locator('.level__value').innerText()).trim();
     const spectrum = await page.locator('.spectrum__row').count();
@@ -131,6 +144,8 @@ async function run() {
     await mobile.locator('input[type="search"], input[type="text"]').first().fill('夜に駆ける YOASOBI');
     await mobile.keyboard.press('Enter');
     await mobile.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 25000 });
+    await settleImages(mobile);
+    await mobile.screenshot({ path: join(artifacts, '07-mobile-results.png'), fullPage: true });
     await mobile.locator('button.track').first().click();
     await mobile.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
     await mobile.screenshot({ path: join(artifacts, '05-mobile-judgment.png'), fullPage: true });

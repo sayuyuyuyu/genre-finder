@@ -3,10 +3,21 @@
  */
 
 import type { TrackCandidate } from '../../shared/types';
-import { trackKey } from '../../shared/genre/normalize';
+import { normalize, trackKey } from '../../shared/genre/normalize';
+import { getGenre } from '../../shared/genre/taxonomy';
 import { scoreMatch } from '../../shared/genre/title';
 import { artworkUrl, type ItunesTrack } from './itunes';
 import type { DeezerTrack } from './deezer';
+
+/** iTunes の粗いジャンル名を IIDX 風表記に寄せる（対応表に無ければ undefined）。 */
+function arcadeGenreFor(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const hit = normalize(raw);
+  if (!hit) return undefined;
+  const genre = getGenre(hit.id);
+  if (!genre) return undefined;
+  return genre.arcade ?? genre.labelEn.toUpperCase();
+}
 
 export function itunesToCandidate(track: ItunesTrack): TrackCandidate {
   const year = track.releaseDate ? Number.parseInt(track.releaseDate.slice(0, 4), 10) : undefined;
@@ -23,6 +34,7 @@ export function itunesToCandidate(track: ItunesTrack): TrackCandidate {
     source: 'itunes',
     sourceId: String(track.trackId),
     rawGenre: track.primaryGenreName,
+    arcadeGenre: arcadeGenreFor(track.primaryGenreName),
     links: track.trackViewUrl ? { itunes: track.trackViewUrl } : undefined,
   };
 }

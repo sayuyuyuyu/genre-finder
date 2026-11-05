@@ -1,7 +1,7 @@
 import { SOURCE_LABELS } from '@shared/types';
 import type { TrackCandidate } from '@shared/types';
 import TrackArtwork from '@/components/TrackArtwork';
-import { displayQuery, trackMeta } from '@/lib/format';
+import { displayQuery, formatDuration } from '@/lib/format';
 
 interface ResultsViewProps {
   tracks: TrackCandidate[];
@@ -65,7 +65,7 @@ export default function ResultsView({
         <ol className="results">
           {tracks.map((track, index) => (
             <li key={track.id || `${track.source}-${track.sourceId}-${index}`}>
-              <TrackRow track={track} featured={index === 0} onSelect={onSelect} />
+              <TrackRow track={track} index={index} featured={index === 0} onSelect={onSelect} />
             </li>
           ))}
         </ol>
@@ -87,12 +87,20 @@ export default function ResultsView({
 
 interface TrackRowProps {
   track: TrackCandidate;
+  index: number;
   featured: boolean;
   onSelect: (track: TrackCandidate) => void;
 }
 
-function TrackRow({ track, featured, onSelect }: TrackRowProps) {
-  const meta = trackMeta(track);
+/** IIDX の選曲リストのように、番号・ジャンル・時間を並べた1行。 */
+function TrackRow({ track, index, featured, onSelect }: TrackRowProps) {
+  // 時間は右端に出すので、メタ情報はアルバムと年だけ
+  const meta = [track.album, track.year ? String(track.year) : null]
+    .filter((part): part is string => Boolean(part))
+    .join(' · ');
+  const duration = formatDuration(track.durationMs);
+  const genre = track.arcadeGenre ?? track.rawGenre ?? null;
+
   return (
     <button
       type="button"
@@ -100,6 +108,9 @@ function TrackRow({ track, featured, onSelect }: TrackRowProps) {
       onClick={() => onSelect(track)}
       aria-label={`${track.title} / ${track.artist} のジャンルを調べる`}
     >
+      <span className="track__index" aria-hidden="true">
+        {String(index + 1).padStart(2, '0')}
+      </span>
       <span className="track__art">
         <TrackArtwork artworkUrl={track.artworkUrl} size={featured ? 'md' : 'sm'} />
       </span>
@@ -109,10 +120,11 @@ function TrackRow({ track, featured, onSelect }: TrackRowProps) {
         <span className="track__artist">{track.artist}</span>
         {meta && <span className="track__meta">{meta}</span>}
       </span>
-      <span className="track__side">
-        {track.rawGenre && <span className="tag">{track.rawGenre}</span>}
+      <span className="track__genre">
+        {genre && <span className="track__arcade">{genre}</span>}
         <span className="micro track__source">{SOURCE_LABELS[track.source]}</span>
       </span>
+      {duration && <span className="track__time">{duration}</span>}
       <span className="track__arrow" aria-hidden="true">
         →
       </span>

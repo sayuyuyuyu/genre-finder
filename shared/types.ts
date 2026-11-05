@@ -35,6 +35,8 @@ export interface TrackCandidate {
   sourceId: string;
   /** ソースが申告しているジャンル（粗いラベル。判定の材料として使う） */
   rawGenre?: string;
+  /** rawGenre をタクソノミーで正規化した IIDX 風表記（例: "SOUNDTRACK"）。 */
+  arcadeGenre?: string;
   /** 30秒試聴の URL（iTunes / Deezer が提供する場合）。 */
   previewUrl?: string;
   links?: Partial<Record<SourceName, string>>;
