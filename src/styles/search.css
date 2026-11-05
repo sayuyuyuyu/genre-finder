@@ -121,7 +121,7 @@
 }
 
 .modes__text {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 11px;
 }
 
@@ -157,7 +157,7 @@
 
 .search__enter {
   margin-left: auto;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 9px;
 }
 
@@ -185,7 +185,7 @@
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .search__icon svg {
@@ -206,7 +206,7 @@
 }
 
 .search__input::placeholder {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 
@@ -240,7 +240,7 @@
   align-items: center;
   gap: 14px;
   margin-bottom: 18px;
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .or-divider::before,
@@ -327,7 +327,7 @@
 
 .dropzone__meta {
   margin-left: auto;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 9px;
   white-space: nowrap;
 }

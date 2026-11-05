@@ -258,7 +258,7 @@ svg {
   font-size: 9.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--cream-32);
+  color: var(--cream-48);
   white-space: nowrap;
 }
 
@@ -398,7 +398,7 @@ button.chip:hover {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0;
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .chips {
@@ -706,7 +706,7 @@ button.chip:hover {
 .error-card__detail .micro {
   display: block;
   margin-bottom: 6px;
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .error-card__actions {
@@ -737,7 +737,7 @@ button.chip:hover {
 }
 
 .site-footer__inner .micro {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 8.5px;
 }
 
@@ -801,7 +801,7 @@ button.chip:hover {
   padding: 0;
   border: 0;
   background: none;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.18em;
@@ -873,7 +873,7 @@ button.chip:hover {
 
 .recent__artist {
   margin-left: 8px;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 11px;
 }
 
@@ -980,4 +980,36 @@ button.chip:hover {
 .examples__random:hover {
   border-color: var(--line-amber);
   color: var(--amber);
+}
+
+/* 調べたジャンルの集計（PLAY DATA） */
+.recent__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 14px;
+  margin-top: 12px;
+}
+
+.recent__top-label {
+  color: var(--cream-48);
+}
+
+.recent__top-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  color: var(--cream-80);
+  font-family: var(--font-arcade);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.recent__top-item i {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0;
 }

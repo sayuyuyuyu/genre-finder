@@ -130,7 +130,7 @@
 }
 
 .verdict__head-right {
-  color: var(--cream-32);
+  color: var(--cream-48);
   letter-spacing: 0.18em;
 }
 
@@ -163,7 +163,7 @@
 }
 
 .verdict__slash {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .verdict__family {
@@ -179,7 +179,7 @@
 }
 
 .level__label {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 10px;
   letter-spacing: 0.2em;
@@ -200,7 +200,7 @@
 }
 
 .level--unknown .level__value {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .level__ticks {
@@ -258,7 +258,7 @@
 }
 
 .spectrum__head .micro:last-child {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .spectrum__list {
@@ -297,7 +297,7 @@
 }
 
 .spectrum__value {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 10px;
   text-align: right;
@@ -339,7 +339,7 @@
 }
 
 .feed__head .micro:last-child {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .feed__list {
@@ -360,7 +360,7 @@
 }
 
 .feed__source {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 0.1em;
@@ -439,7 +439,7 @@
 
 .judgment__note::before {
   content: '· ';
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .judgment__note--warn {
@@ -465,7 +465,7 @@
 }
 
 .judgment__footer .micro {
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 /* -------------------------------- responsive ------------------------------ */
@@ -623,7 +623,7 @@
 }
 
 .verdict__work-label {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 8.5px;
   letter-spacing: 0.2em;

@@ -11,6 +11,11 @@ interface RecentListProps {
 export default function RecentList({ items, onPick, onClear }: RecentListProps) {
   if (items.length === 0) return null;
 
+  // 調べたジャンルの集計（IIDX の PLAY DATA 風）
+  const counts = new Map<string, number>();
+  for (const item of items) counts.set(item.arcade, (counts.get(item.arcade) ?? 0) + 1);
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+
   return (
     <section className="recent" aria-labelledby="recent-label">
       <div className="recent__head">
@@ -21,6 +26,17 @@ export default function RecentList({ items, onPick, onClear }: RecentListProps) 
           CLEAR
         </button>
       </div>
+      {items.length >= 2 && (
+        <ul className="recent__top" aria-label="調べたジャンルの集計">
+          <li className="recent__top-label micro">PLAY DATA</li>
+          {top.map(([arcade, count]) => (
+            <li className="recent__top-item" key={arcade}>
+              {arcade}
+              <i>{count}</i>
+            </li>
+          ))}
+        </ul>
+      )}
       <ul className="recent__list">
         {items.map((entry) => (
           <li key={`${entry.track.id}-${entry.track.title}`}>

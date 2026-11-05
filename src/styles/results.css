@@ -83,7 +83,7 @@
 
 .track__index {
   grid-area: index;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.08em;
@@ -149,13 +149,13 @@
 }
 
 .track__source {
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 8px;
 }
 
 .track__time {
   grid-area: time;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-family: var(--font-mono);
   font-size: 10px;
   text-align: right;
@@ -163,7 +163,7 @@
 
 .track__arrow {
   grid-area: arrow;
-  color: var(--cream-32);
+  color: var(--cream-48);
   font-size: 15px;
   line-height: 1;
   transition:
@@ -257,7 +257,7 @@
   content: '—';
   position: absolute;
   left: 0;
-  color: var(--cream-32);
+  color: var(--cream-48);
 }
 
 .empty__actions {

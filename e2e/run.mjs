@@ -57,6 +57,68 @@ async function settleImages(page, timeout = 8000) {
     .catch(() => {});
 }
 
+
+/**
+ * 本文テキストのコントラストを検査する（WCAG AA: 通常 4.5 / 大 3.0）。
+ * 背景色は要素自身から祖先へ辿って、不透明な色を採用する。
+ */
+async function contrastViolations(page) {
+  return page.evaluate(() => {
+    const parse = (str) => {
+      const m = str.match(/rgba?\(([^)]+)\)/);
+      if (!m) return null;
+      const p = m[1].split(',').map((v) => parseFloat(v.trim()));
+      return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+    };
+    const lum = ({ r, g, b }) => {
+      const f = (v) => {
+        v /= 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      };
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    };
+    const blend = (fg, bg) => ({
+      r: fg.r * fg.a + bg.r * (1 - fg.a),
+      g: fg.g * fg.a + bg.g * (1 - fg.a),
+      b: fg.b * fg.a + bg.b * (1 - fg.a),
+      a: 1,
+    });
+    const ratio = (a, b) => {
+      const l1 = lum(a);
+      const l2 = lum(b);
+      return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    };
+    const effectiveBg = (el) => {
+      let node = el;
+      while (node && node !== document.documentElement) {
+        const bg = parse(getComputedStyle(node).backgroundColor);
+        if (bg && bg.a > 0.6) return bg;
+        node = node.parentElement;
+      }
+      return { r: 18, g: 16, b: 14, a: 1 };
+    };
+
+    const out = [];
+    for (const el of document.querySelectorAll('.judgment *')) {
+      const text = (el.textContent || '').trim();
+      if (!text || el.children.length > 0) continue;
+      const cs = getComputedStyle(el);
+      if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.1) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      const fg = parse(cs.color);
+      if (!fg) continue;
+      const bg = effectiveBg(el);
+      const cr = ratio(blend(fg, bg), bg);
+      const size = parseFloat(cs.fontSize);
+      const large = size >= 18.66 || (size >= 14 && parseFloat(cs.fontWeight) >= 700);
+      const min = large ? 3 : 4.5;
+      if (cr < min) out.push({ text: text.slice(0, 20), cls: String(el.className || el.tagName), cr: Math.round(cr * 100) / 100 });
+    }
+    return out;
+  });
+}
+
 async function noHorizontalOverflow(page) {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 }
@@ -122,6 +184,12 @@ async function run() {
     check('judgment: SPECTRUM が 2 行以上', spectrum >= 2, `${spectrum} 行`);
     check('judgment: DATA FEED が 1 行以上', feed >= 1, `${feed} 行`);
     check('judgment: コメントが 1 行', comment.length > 0 && comment.length < 60);
+    const contrast = await contrastViolations(page);
+    check(
+      'a11y: テキストのコントラスト（WCAG AA）',
+      contrast.length === 0,
+      contrast.slice(0, 3).map((v) => `${v.cr} .${v.cls} "${v.text}"`).join(' / '),
+    );
     const preview = await page.locator('.preview').count();
     check('judgment: 試聴ボタンがある', preview === 1, `${preview} 個`);
     if (mode === 'mock') {
@@ -166,6 +234,30 @@ async function run() {
     const recentCount = await page.locator('.recent__row').count();
     await page.screenshot({ path: join(artifacts, '06-recent.png'), fullPage: true });
     check('recent: 履歴が残る', recentCount >= 1, `${recentCount} 件`);
+
+    // PLAY DATA: 2件以上でジャンル集計が出る
+    await page.evaluate(() => {
+      const entry = (id, title, arcade) => ({
+        track: { id, title, artist: 'TEST', source: 'itunes', sourceId: id },
+        arcade,
+        labelJa: arcade,
+        at: Date.now(),
+      });
+      window.localStorage.setItem(
+        'genre-finder:recent:v1',
+        JSON.stringify([entry('a', 'A', 'J-POP'), entry('b', 'B', 'J-POP'), entry('c', 'C', 'CHIPTUNE')]),
+      );
+    });
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForSelector('.recent__top');
+    const topCount = await page.locator('.recent__top-item').count();
+    const firstTop = (await page.locator('.recent__top-item').first().innerText()).replace(/\s+/g, ' ');
+    check(
+      'recent: PLAY DATA が集計される',
+      topCount === 2 && firstTop.includes('J-POP') && firstTop.includes('2'),
+      `${topCount} / ${firstTop}`,
+    );
+    await page.screenshot({ path: join(artifacts, '13-play-data.png'), fullPage: true });
 
     // RANDOM（おまかせ）で1曲選ぶ
     check('random: ボタンがある', (await page.getByRole('button', { name: /RANDOM/ }).count()) === 1);
