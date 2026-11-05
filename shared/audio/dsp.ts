@@ -157,39 +157,52 @@ function estimateTempo(
   return { bpm, confidence: Math.max(0, Math.min(1, best.score)) };
 }
 
-/** 低域の立ち上がりが4分音符の格子に乗っているかを 0-1 で返す。 */
+/**
+ * 低域の立ち上がりが4分音符の格子に乗っているかを 0-1 で返す。
+ * テンポ推定は数%ずれることがあるため、3秒の窓ごとに位相を探して評価し、
+ * 長時間のズレに影響されないようにする。
+ */
 function fourOnFloorScore(lowEnergy: Float64Array, bpm: number, framesPerSecond: number): number {
   if (bpm <= 0) return 0;
-  const beatsPerSecond = bpm / 60;
-  const framesPerBeat = framesPerSecond / beatsPerSecond;
-  if (!Number.isFinite(framesPerBeat) || framesPerBeat < 1) return 0;
+  const framesPerBeat = framesPerSecond / (bpm / 60);
+  if (!Number.isFinite(framesPerBeat) || framesPerBeat < 2) return 0;
 
-  let mean = 0;
-  for (const value of lowEnergy) mean += value;
-  mean /= Math.max(1, lowEnergy.length);
+  const windowFrames = Math.max(8, Math.round(framesPerSecond * 3));
+  const phaseStep = 0.5;
+  let total = 0;
+  let counted = 0;
 
-  // 拍の格子に乗っているフレームの低域エネルギーが、全体平均よりどれだけ強いか
-  let onBeat = 0;
-  let offBeat = 0;
-  let onCount = 0;
-  let offCount = 0;
-  for (let frame = 0; frame < lowEnergy.length; frame += 1) {
-    const position = frame % framesPerBeat;
-    const distance = Math.min(position, framesPerBeat - position);
-    if (distance <= 1.5) {
-      onBeat += lowEnergy[frame]!;
-      onCount += 1;
-    } else if (distance >= framesPerBeat / 2 - 1.5 && distance <= framesPerBeat / 2 + 1.5) {
-      offBeat += lowEnergy[frame]!;
-      offCount += 1;
+  for (let start = 0; start + windowFrames <= lowEnergy.length; start += windowFrames) {
+    let best = 0;
+    for (let phase = 0; phase < framesPerBeat; phase += phaseStep) {
+      let onBeat = 0;
+      let onCount = 0;
+      let offBeat = 0;
+      let offCount = 0;
+      for (let i = 0; i < windowFrames; i += 1) {
+        const frame = start + i;
+        const position = ((frame - phase) % framesPerBeat + framesPerBeat) % framesPerBeat;
+        const distance = Math.min(position, framesPerBeat - position);
+        if (distance <= 1.5) {
+          onBeat += lowEnergy[frame]!;
+          onCount += 1;
+        } else if (Math.abs(distance - framesPerBeat / 2) <= 1.5) {
+          offBeat += lowEnergy[frame]!;
+          offCount += 1;
+        }
+      }
+      if (onCount === 0) continue;
+      const onAverage = onBeat / onCount;
+      const offAverage = offCount > 0 ? offBeat / offCount : 0;
+      if (onAverage <= 0) continue;
+      const contrast = (onAverage - offAverage) / onAverage;
+      if (contrast > best) best = contrast;
     }
+    total += Math.max(0, Math.min(1, best * 1.6));
+    counted += 1;
   }
-  if (onCount === 0) return 0;
-  const onAverage = onBeat / onCount;
-  const offAverage = offCount > 0 ? offBeat / offCount : mean;
-  if (onAverage <= 0) return 0;
-  const contrast = (onAverage - offAverage) / onAverage;
-  return Math.max(0, Math.min(1, contrast * 1.6));
+
+  return counted > 0 ? total / counted : 0;
 }
 
 /** 音声（モノラル）から特徴を抽出する。 */

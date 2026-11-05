@@ -88,11 +88,10 @@ describe('音響特徴（DSP）', () => {
     expect(ids.some((id) => ['drum-and-bass', 'breakcore', 'speedcore'].includes(id))).toBe(true);
   });
 
-  it('ホワイトノイズはロック/メタル寄りになる', () => {
+  it('ホワイトノイズでは断定しない（票を出さない）', () => {
     const { features } = extractFeatures(noise(8), SR);
     expect(features.flatness).toBeGreaterThan(0.2);
-    const ids = classifyAudio(features).votes.map((vote) => vote.id);
-    expect(ids.some((id) => ['rock', 'metal'].includes(id))).toBe(true);
+    expect(classifyAudio(features).votes).toEqual([]);
   });
 
   it('サイン波は静かな系（アンビエント/クラシック）に寄る', () => {
@@ -113,5 +112,64 @@ describe('音響特徴（DSP）', () => {
   it('短すぎる音声は解析対象外', () => {
     const { features } = extractFeatures(sine(440, 1, SR), SR);
     expect(classifyAudio(features).votes).toEqual([]);
+  });
+});
+
+describe('実音源の特徴量からの分類（キャリブレーション）', () => {
+  const base = {
+    bpm: 0,
+    tempoConfidence: 0.4,
+    fourOnFloor: 0,
+    onsetDensity: 2,
+    brightness: 2200,
+    flatness: 0.35,
+    lowRatio: 0.5,
+    highRatio: 0.015,
+    dynamicRange: 15,
+    zeroCrossingRate: 0.16,
+    rms: 0.2,
+    durationSec: 20,
+  };
+
+  const ids = (features: Partial<typeof base>): string[] =>
+    classifyAudio({ ...base, ...features }).votes.map((vote) => vote.id);
+
+  it('4つ打ち・117BPM・低域強めはハウス系', () => {
+    const result = ids({ bpm: 117, fourOnFloor: 0.85, brightness: 2206, flatness: 0.354, lowRatio: 0.575 });
+    expect(result[0]).toBe('house');
+    expect(result).toContain('dance');
+  });
+
+  it('4つ打ち・129BPM・明るい音はダンス/ハウス系', () => {
+    const result = ids({ bpm: 129, fourOnFloor: 0.95, brightness: 2584, flatness: 0.343, lowRatio: 0.553 });
+    expect(result).toContain('house');
+    expect(result).toContain('dance');
+  });
+
+  it('歪みが少なく低域の効いたロックはロック', () => {
+    const result = ids({ bpm: 144, fourOnFloor: 0.04, brightness: 1337, flatness: 0.178, lowRatio: 0.622 });
+    expect(result[0]).toBe('rock');
+  });
+
+  it('高域成分が多く硬い音はチップチューン', () => {
+    const result = ids({ bpm: 136, fourOnFloor: 0, brightness: 2956, flatness: 0.49, lowRatio: 0.207, highRatio: 0.063, onsetDensity: 3.1 });
+    expect(result[0]).toBe('chiptune');
+  });
+
+  it('低速・少ない打楽器・低域少なめはジャズ（4つ打ち気味でも）', () => {
+    const result = ids({ bpm: 83, fourOnFloor: 0, brightness: 2598, flatness: 0.428, lowRatio: 0.146, onsetDensity: 1.3 });
+    expect(result[0]).toBe('jazz');
+    const steady = ids({ bpm: 83, fourOnFloor: 0.53, brightness: 2598, flatness: 0.428, lowRatio: 0.146, onsetDensity: 1.3 });
+    expect(steady[0]).toBe('jazz');
+  });
+
+  it('ハーフタイムで低域の強いビートはヒップホップ', () => {
+    const result = ids({ bpm: 152, fourOnFloor: 0, lowRatio: 0.859, flatness: 0.305, onsetDensity: 2 });
+    expect(result[0]).toBe('hip-hop');
+  });
+
+  it('遅め・打楽器少なめはR&B', () => {
+    const result = ids({ bpm: 86, fourOnFloor: 0.22, lowRatio: 0.637, flatness: 0.396, onsetDensity: 0.55 });
+    expect(result[0]).toBe('r-and-b');
   });
 });
