@@ -42,6 +42,8 @@ export interface TrackCandidate {
   links?: Partial<Record<SourceName, string>>;
   /** 検索スコア（高いほどクエリに近い）。 */
   score?: number;
+  /** ソースが持つ人気度（Deezer の rank）。同点時の優先度に使う内部値。 */
+  popularity?: number;
 }
 
 /** あるソースが主張したジャンル 1 件。 */

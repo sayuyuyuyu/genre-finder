@@ -95,6 +95,44 @@ export function parseSearchQuery(
   return { title: query };
 }
 
+/**
+ * 区切りの無いクエリから「曲名 アーティスト」形式の分割候補を作る。
+ * 例: "Lemon 米津玄師" → [{ title: "Lemon", artist: "米津玄師" }, ...]
+ * 実際にどの分割が正しいかは、アーティスト検索の結果で API 側が検証する。
+ */
+export function candidateArtistSplits(raw: string): Array<{ title: string; artist: string }> {
+  const tokens = raw.normalize('NFKC').trim().split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return [];
+
+  const splits: Array<{ title: string; artist: string }> = [
+    // 末尾1語をアーティスト（"Lemon 米津玄師"）
+    { title: tokens.slice(0, -1).join(' '), artist: tokens.slice(-1).join(' ') },
+    // 先頭1語をアーティスト（"NewJeans Ditto"）
+    { title: tokens.slice(1).join(' '), artist: tokens[0] ?? '' },
+    // 末尾2語をアーティスト（"Megalovania Toby Fox"）
+    { title: tokens.slice(0, -2).join(' '), artist: tokens.slice(-2).join(' ') },
+    // 先頭2語をアーティスト（"Daft Punk Get Lucky"）
+    { title: tokens.slice(2).join(' '), artist: tokens.slice(0, 2).join(' ') },
+  ];
+  if (tokens.length >= 3) {
+    // 末尾2語をアーティスト（"Megalovania Toby Fox"）
+    splits.push({ title: tokens.slice(0, -2).join(' '), artist: tokens.slice(-2).join(' ') });
+    // 先頭2語をアーティスト（"Daft Punk Get Lucky"）
+    splits.push({ title: tokens.slice(2).join(' '), artist: tokens.slice(0, 2).join(' ') });
+  }
+
+  const seen = new Set<string>();
+  return splits.filter((split) => {
+    const title = split.title.trim();
+    const artist = split.artist.trim();
+    if (!title || !artist) return false;
+    const key = `${title}|${artist}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 /** 検索語を作る。アーティストがあれば足してフルテキスト検索に投げる。 */
 export function buildSearchTerm(title: string, artist?: string | null): string {
   const parts = [title.trim(), artist?.trim()].filter((part): part is string => Boolean(part));
@@ -111,7 +149,7 @@ const BRACKET_VARIANT =
 
 /** カバー・非公式版のシグナル。候補側にだけ含まれる場合は大きく減点する。 */
 const COVER_SIGNAL =
-  /(cover|karaoke|tribute|lullaby|8-?bit|backing track|instrumental|made famous|originally performed|in the style of|string quartet|rockabye|rendition|music box|piano version)/gi;
+  /(cover|karaoke|tribute|lullaby|8-?bit|backing track|instrumental|made famous|originally performed|in the style of|string quartet|rockabye|rendition|music box|piano version|原曲歌手|ガイド無し|ガイドなし|カラオケ|歌っちゃ王|歌ってみた|弾いてみた|オルゴール|カバー|インスト|ピアノver|キー[+\-－＋]?\d)/gi;
 
 /** クエリの文字種で iTunes のストアフロントを選ぶ。日本語なら jp、それ以外は us を優先。 */
 export function chooseStorefront(query: string): { primary: 'jp' | 'us'; fallback: 'jp' | 'us' } {
@@ -243,9 +281,10 @@ export function scoreMatch(candidate: ScorableCandidate, query: ScorableQuery): 
     // アーティストがまったく重ならない候補は大きく減点する（カバー・別アーティスト対策）
     if (artist === 0) score *= 0.5;
   } else {
-    const combined = similarity(`${candidate.title} ${candidate.artist ?? ''}`, query.title);
+    // アーティスト未指定のときはタイトル重視。候補のアーティスト名の長さで
+    // スコアが変わるのを避ける（"Blinding Lights" で短い名前のカバーが勝つ対策）。
     const artistOnly = artistSimilarity(candidate.artist, query.title);
-    score = title * 0.5 + combined * 0.3 + artistOnly * 0.2;
+    score = title * 0.8 + artistOnly * 0.2;
   }
   score = Math.max(0, score - bracketVariantPenalty(candidate.title, query.title));
   score = Math.max(0, score - coverPenalty(candidate, query));

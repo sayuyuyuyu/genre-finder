@@ -7,7 +7,13 @@
 import type { TrackCandidate } from '../../shared/types';
 import { SOURCE_LABELS } from '../../shared/types';
 import { containsJapanese } from '../../shared/genre/normalize';
-import { buildSearchTerm, chooseStorefront, parseSearchQuery } from '../../shared/genre/title';
+import {
+  buildSearchTerm,
+  candidateArtistSplits,
+  chooseStorefront,
+  parseSearchQuery,
+  titleSimilarity,
+} from '../../shared/genre/title';
 import { deezerSearchTracks } from './deezer';
 import { itunesSearch } from './itunes';
 import { deezerToCandidate, itunesToCandidate, MIN_CANDIDATE_SCORE, rankCandidates } from './candidates';
@@ -56,6 +62,36 @@ function deriveArtistTerms(
   const first = words[0] ?? '';
   const firstTwo = words.slice(0, 2).join(' ');
   return [...new Set([first, firstTwo])].filter((term) => term.length >= 2);
+}
+
+/**
+ * 区切りの無いクエリ（"Lemon 米津玄師" など）からアーティストを推定する。
+ * 分割候補ごとに iTunes の artistTerm 検索を1回だけ試し、曲名が一致するものを採用する。
+ */
+async function inferArtistSplit(
+  rawQuery: string,
+  country: 'jp' | 'us',
+): Promise<{ title: string; artist: string } | null> {
+  const splits = candidateArtistSplits(rawQuery).slice(0, 4);
+  for (const split of splits) {
+    try {
+      const results = await itunesSearch(split.artist, {
+        country,
+        limit: 10,
+        attribute: 'artistTerm',
+      });
+      if (results.length === 0) continue;
+      const best = results.reduce(
+        (max, result) => Math.max(max, titleSimilarity(result.trackName, split.title)),
+        0,
+      );
+      // 曲名がほぼ完全一致するときだけ採用する（Blinding Lights を Blinding + Lights に割らない）
+      if (best >= 0.85) return split;
+    } catch {
+      // 推定に失敗しても致命的ではない
+    }
+  }
+  return null;
 }
 
 /** iTunes の検索フォールバック階梯。上から順に試す。 */
@@ -151,7 +187,26 @@ export async function searchTracks(
   if (itunesFailed) warnings.push(`${SOURCE_LABELS.itunes} に接続できませんでした。`);
   if (deezer.failed) warnings.push(`${SOURCE_LABELS.deezer} に接続できませんでした。`);
 
-  const tracks = rankCandidates([...itunesCandidates, ...deezer.candidates], query);
+  // 「曲名 アーティスト」を分割できていない場合は、アーティストを推定して原曲を補完する
+  let resolvedQuery: { title: string; artist?: string } = query;
+  if (!query.artist) {
+    const split = await inferArtistSplit(q, store.primary);
+    if (split) {
+      resolvedQuery = split;
+      try {
+        const extra = await itunesSearch(split.artist, {
+          country: store.primary,
+          limit: ITUNES_LIMIT,
+          attribute: 'artistTerm',
+        });
+        itunesCandidates.push(...extra.map(itunesToCandidate));
+      } catch {
+        // 補完に失敗しても既存候補で判定する
+      }
+    }
+  }
+
+  const tracks = rankCandidates([...itunesCandidates, ...deezer.candidates], resolvedQuery);
   const hasStrongMatch = tracks.some((track) => (track.score ?? 0) >= MIN_CANDIDATE_SCORE);
   if (!hasStrongMatch && !itunesFailed && !deezer.failed) {
     warnings.push(
@@ -159,5 +214,5 @@ export async function searchTracks(
     );
   }
 
-  return { query, tracks, warnings };
+  return { query: resolvedQuery, tracks, warnings };
 }

@@ -700,3 +700,69 @@
   stroke-linecap: round;
   fill: none;
 }
+
+/* モバイルは縦に長すぎるので、余白を詰めて密度を上げる */
+@media (max-width: 560px) {
+  .judgment__grid {
+    gap: 24px;
+    margin-top: 20px;
+  }
+
+  .judgment__track {
+    margin-top: 16px;
+  }
+
+  .ext-links {
+    margin-top: 16px;
+  }
+
+  .verdict__head {
+    padding-bottom: 8px;
+  }
+
+  .verdict__arcade {
+    margin-top: 12px;
+  }
+
+  .level {
+    margin-top: 18px;
+  }
+
+  .verdict__comment {
+    margin-top: 14px;
+    font-size: 12.5px;
+  }
+
+  .spectrum {
+    margin-top: 24px;
+    padding-top: 14px;
+  }
+
+  .spectrum__row {
+    padding: 5px 4px;
+  }
+
+  .judgment__lower {
+    margin-top: 26px;
+    padding-top: 18px;
+    gap: 24px;
+  }
+
+  .feed__row {
+    padding: 7px 0;
+  }
+
+  .notes-block .chips {
+    margin-top: 10px;
+  }
+
+  .judgment__notes {
+    margin-top: 22px;
+    padding-top: 14px;
+  }
+
+  .judgment__footer {
+    margin-top: 26px;
+    padding-top: 18px;
+  }
+}

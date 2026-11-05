@@ -316,6 +316,20 @@ async function run() {
     await mobile.screenshot({ path: join(artifacts, '05-mobile-judgment.png'), fullPage: true });
     check('mobile: 横スクロールなし（判定）', await noHorizontalOverflow(mobile));
 
+    // ランキング回帰（実 API のみ）: 「曲名 アーティスト」入力で原曲が1位
+    if (mode === 'live') {
+      await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await page.locator('input[type="search"], input[type="text"]').first().fill('Lemon 米津玄師');
+      await page.keyboard.press('Enter');
+      await page.waitForSelector('button.track', { timeout: 30000 });
+      const topRow = (await page.locator('button.track').first().innerText()).replace(/\n/g, ' | ');
+      check(
+        'ranking: 「曲名 アーティスト」で原曲が1位',
+        topRow.includes('Lemon') && topRow.includes('米津玄師'),
+        topRow.slice(0, 80),
+      );
+    }
+
     // 360px（最小幅）でも崩れないこと
     const narrow = await browser.newPage({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 2 });
     if (mode === 'mock') await installMocks(narrow);

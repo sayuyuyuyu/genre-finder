@@ -342,3 +342,22 @@
     order: -1;
   }
 }
+
+@media (max-width: 560px) {
+  .stage__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: 19px;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .stage__sub {
+    margin-top: 6px;
+    font-size: 11.5px;
+  }
+
+  .stage__head {
+    padding-bottom: 14px;
+  }
+}

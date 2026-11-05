@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   artistSimilarity,
   buildSearchTerm,
+  candidateArtistSplits,
   chooseStorefront,
   cleanArtistName,
   cleanTrackTitle,
@@ -177,5 +178,59 @@ describe('scoreMatch（カバー・非公式版の減点）', () => {
     );
     expect(exact).toBe(1);
     expect(exact - near).toBeGreaterThanOrEqual(0.5);
+  });
+});
+
+describe('candidateArtistSplits（「曲名 アーティスト」推定）', () => {
+  it('"Lemon 米津玄師" を 曲名 + アーティスト に分ける候補を返す', () => {
+    const splits = candidateArtistSplits('Lemon 米津玄師');
+    expect(splits).toContainEqual({ title: 'Lemon', artist: '米津玄師' });
+  });
+
+  it('"Megalovania Toby Fox" は末尾2語をアーティストにする候補を含む', () => {
+    const splits = candidateArtistSplits('Megalovania Toby Fox');
+    expect(splits).toContainEqual({ title: 'Megalovania', artist: 'Toby Fox' });
+  });
+
+  it('"NewJeans Ditto" は先頭をアーティストにする候補を含む', () => {
+    const splits = candidateArtistSplits('NewJeans Ditto');
+    expect(splits).toContainEqual({ title: 'Ditto', artist: 'NewJeans' });
+  });
+
+  it('1語だけなら候補なし', () => {
+    expect(candidateArtistSplits('Lemon')).toEqual([]);
+    expect(candidateArtistSplits('   ')).toEqual([]);
+  });
+});
+
+describe('カバー・カラオケ表記の減点', () => {
+  const query = { title: 'Lemon', artist: '米津玄師' };
+
+  it('日本語カラオケ版は原曲より大きく下がる', () => {
+    const original = scoreMatch({ title: 'Lemon', artist: '米津玄師' }, query);
+    const karaoke = scoreMatch(
+      {
+        title: 'Lemon Key+2(原曲歌手:米津玄師)[ガイド無しカラオケ]',
+        artist: '歌っちゃ王',
+      },
+      query,
+    );
+    expect(original).toBeGreaterThan(karaoke);
+    expect(original - karaoke).toBeGreaterThan(0.4);
+  });
+
+  it('オルゴール版も減点される', () => {
+    const original = scoreMatch({ title: 'First Love', artist: '宇多田ヒカル' }, { title: 'First Love', artist: '宇多田ヒカル' });
+    const orgel = scoreMatch(
+      { title: 'First Love (オルゴールver.)', artist: 'コロムビアオルゴール' },
+      { title: 'First Love', artist: '宇多田ヒカル' },
+    );
+    expect(original).toBeGreaterThan(orgel);
+  });
+
+  it('アーティスト未指定でもタイトル一致の候補が同点になり、長いアーティスト名で不利にならない', () => {
+    const a = scoreMatch({ title: 'Blinding Lights', artist: 'Loi' }, { title: 'Blinding Lights' });
+    const b = scoreMatch({ title: 'Blinding Lights', artist: 'The Weeknd' }, { title: 'Blinding Lights' });
+    expect(Math.abs(a - b)).toBeLessThan(0.02);
   });
 });

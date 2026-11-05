@@ -18,6 +18,8 @@ export interface DeezerAlbumRef {
 }
 
 export interface DeezerTrack {
+  /** Deezer の人気度（大きいほど人気）。 */
+  rank?: number;
   id: number;
   title: string;
   duration?: number;

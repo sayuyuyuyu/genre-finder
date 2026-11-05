@@ -55,11 +55,33 @@ export function deezerToCandidate(track: DeezerTrack): TrackCandidate {
     previewUrl: track.preview || undefined,
     source: 'deezer',
     sourceId: String(track.id),
+    popularity: typeof track.rank === 'number' ? track.rank : undefined,
     links: track.link ? { deezer: track.link } : undefined,
   };
 }
 
 const SOURCE_PRIORITY: Record<string, number> = { itunes: 0, deezer: 1, musicbrainz: 2 };
+
+/** スコアが近い候補同士では人気度が高い方を前にする（カバーより原曲が上に来やすくする）。 */
+const SCORE_TIE_BAND = 0.03;
+
+function compareCandidates(a: TrackCandidate, b: TrackCandidate): number {
+  const scoreA = a.score ?? 0;
+  const scoreB = b.score ?? 0;
+  if (Math.abs(scoreA - scoreB) > SCORE_TIE_BAND) return scoreB - scoreA;
+
+  // 人気度は両方に値があるときだけ比較する（iTunes 側が一律不利にならないように）
+  const popularityA = a.popularity ?? 0;
+  const popularityB = b.popularity ?? 0;
+  if (popularityA > 0 && popularityB > 0 && popularityA !== popularityB) {
+    return popularityB - popularityA;
+  }
+
+  const priorityA = SOURCE_PRIORITY[a.source] ?? 9;
+  const priorityB = SOURCE_PRIORITY[b.source] ?? 9;
+  if (priorityA !== priorityB) return priorityA - priorityB;
+  return scoreB - scoreA;
+}
 
 /** これ未満のスコアの候補は検索結果から除外する。 */
 export const MIN_CANDIDATE_SCORE = 0.12;
@@ -106,7 +128,7 @@ export function rankCandidates(
     }
   }
 
-  const sorted = [...best.values()].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const sorted = [...best.values()].sort(compareCandidates);
   const minScore = options.minScore ?? MIN_CANDIDATE_SCORE;
   const maxCount = options.maxCount ?? MAX_CANDIDATE_COUNT;
   const passing = sorted.filter((candidate) => (candidate.score ?? 0) >= minScore);
