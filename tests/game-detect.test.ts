@@ -198,3 +198,20 @@ describe('音ゲー・同人作品名の検出', () => {
     expect(detectGameWork([field('アルバム名', 'コミックマーケット 104')])).toBeNull();
   });
 });
+
+describe('追加したゲーム作品', () => {
+  it('作品名を検出する（ELDEN RING / FIRE EMBLEM / HOLLOW KNIGHT）', () => {
+    expect(detectGameWork([field('アルバム名', 'ELDEN RING Original Soundtrack')])).toBe(
+      'ELDEN RING',
+    );
+    expect(detectGameWork([field('アルバム名', 'Fire Emblem Fates')])).toBe('FIRE EMBLEM');
+    expect(detectGameWork([field('アルバム名', 'Hollow Knight (Original Soundtrack)')])).toBe(
+      'HOLLOW KNIGHT',
+    );
+  });
+
+  it('作品名がゲーム音楽の証拠になる', () => {
+    expect(ids([field('アルバム名', 'ELDEN RING Original Soundtrack')])).toContain('game-music');
+    expect(ids([field('アーティスト名', '桜庭統')])).toContain('game-music');
+  });
+});
