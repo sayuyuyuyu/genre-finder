@@ -165,22 +165,30 @@
         {
           "id": "fm-synth",
           "labelJa": "FM音源",
-          "arcade": "FM SYNTH"
+          "arcade": "FM SYNTH",
+          "tagline": "98年の音。耳が懐かしい。",
+          "family": "ゲームミュージック"
         },
         {
           "id": "game-music",
           "labelJa": "ゲーム音楽",
-          "arcade": "GAME MUSIC"
+          "arcade": "GAME MUSIC",
+          "tagline": "ゲームの記憶ごと鳴らす。",
+          "family": "ゲームミュージック"
         },
         {
           "id": "electronic",
           "labelJa": "エレクトロニック",
-          "arcade": "ELECTRONIC"
+          "arcade": "ELECTRONIC",
+          "tagline": "機械が歌ってる。",
+          "family": "エレクトロニック"
         },
         {
           "id": "synth-pop",
           "labelJa": "シンセポップ",
-          "arcade": "SYNTH POP"
+          "arcade": "SYNTH POP",
+          "tagline": "シンセが主役。",
+          "family": "ポップス"
         }
       ]
     }

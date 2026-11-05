@@ -112,7 +112,14 @@ export interface GenreJudgment {
     description: string;
     /** IIDX のジャンル説明のような、短くて遊びのある一行（任意）。 */
     tagline?: string;
-    related: Array<{ id: string; labelJa: string; arcade?: string }>;
+    related: Array<{
+      id: string;
+      labelJa: string;
+      arcade?: string;
+      /** そのジャンルの一行コメント（IIDX のジャンル説明のような短い文）。 */
+      tagline?: string;
+      family?: string;
+    }>;
   };
 }
 

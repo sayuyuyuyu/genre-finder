@@ -236,6 +236,18 @@ async function run() {
       copied.replace(/\n/g, ' | ').slice(0, 70),
     );
 
+    await page.locator('.chip--related').first().click();
+    await page.waitForSelector('.related-note', { timeout: 4000 });
+    const relatedNote = (await page.locator('.related-note').innerText()).replace(/\n/g, ' ');
+    await page.locator('.judgment__lower').screenshot({ path: join(artifacts, '17-related-note.png') });
+    await page.locator('.chip--related').first().click();
+    await page.waitForTimeout(100);
+    check(
+      'judgment: RELATEDを押すと一行コメントが出る',
+      relatedNote.length > 0 && (await page.locator('.related-note').count()) === 0,
+      relatedNote.slice(0, 40),
+    );
+
     const lampCount = await page.locator('.lamp').count();
     const agreeCount = await page.locator('.lamp--agree').count();
     check(

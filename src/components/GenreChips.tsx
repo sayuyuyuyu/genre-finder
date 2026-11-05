@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SOURCE_LABELS } from '@shared/types';
 import type { GenreJudgment } from '@shared/types';
 
@@ -29,23 +30,55 @@ export function FineTags({ tags }: FineTagsProps) {
 }
 
 interface RelatedGenresProps {
-  related: Array<{ id: string; labelJa: string; arcade?: string }>;
+  related: Array<{
+    id: string;
+    labelJa: string;
+    arcade?: string;
+    tagline?: string;
+    family?: string;
+  }>;
 }
 
+/**
+ * 関連ジャンル。押すとそのジャンルの一行コメントが出る（文章ではなく短い手触り）。
+ */
 export function RelatedGenres({ related }: RelatedGenresProps) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   if (related.length === 0) return null;
+
+  const selected = related.find((genre) => genre.id === selectedId) ?? null;
+
   return (
     <section className="notes-block" aria-labelledby="related-label">
       <p id="related-label" className="micro">
         RELATED
       </p>
       <ul className="chips">
-        {related.map((genre) => (
-          <li className="chip chip--related" key={genre.id} title={genre.labelJa}>
-            {genre.arcade ?? genre.labelJa}
-          </li>
-        ))}
+        {related.map((genre) => {
+          const active = genre.id === selectedId;
+          return (
+            <li key={genre.id}>
+              <button
+                type="button"
+                className={`chip chip--related${active ? ' is-active' : ''}`}
+                onClick={() => setSelectedId((prev) => (prev === genre.id ? null : genre.id))}
+                aria-pressed={active}
+                title={genre.family ?? genre.labelJa}
+              >
+                {genre.arcade ?? genre.labelJa}
+              </button>
+            </li>
+          );
+        })}
       </ul>
+      {selected && (
+        <p className="related-note" aria-live="polite">
+          <span className="related-note__genre">{selected.arcade ?? selected.labelJa}</span>
+          <span className="related-note__text">
+            {selected.tagline ?? selected.family ?? selected.labelJa}
+          </span>
+        </p>
+      )}
     </section>
   );
 }

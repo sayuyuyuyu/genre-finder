@@ -1713,7 +1713,7 @@ export function isDescendantOf(id: string, ancestorId: string): boolean {
 /** related を UI 用の {id, labelJa} に変換する（存在しない id は捨てる）。 */
 export function relatedGenres(
   id: string,
-): Array<{ id: string; labelJa: string; arcade: string }> {
+): Array<{ id: string; labelJa: string; arcade: string; tagline?: string; family: string }> {
   const genre = GENRE_BY_ID.get(id);
   if (!genre) return [];
   return genre.related.flatMap((relatedId) => {
@@ -1724,6 +1724,8 @@ export function relatedGenres(
         id: related.id,
         labelJa: related.labelJa,
         arcade: related.arcade ?? related.labelEn.toUpperCase(),
+        ...(related.tagline ? { tagline: related.tagline } : {}),
+        family: related.family,
       },
     ];
   });

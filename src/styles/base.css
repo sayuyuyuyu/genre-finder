@@ -1127,3 +1127,31 @@ button.chip:hover {
     opacity: 0.5;
   }
 }
+
+/* RELATED チップを押したときの一行コメント */
+.chip--related.is-active {
+  border-color: var(--line-amber);
+  color: var(--amber);
+}
+
+.related-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin-top: 12px;
+}
+
+.related-note__genre {
+  color: var(--amber);
+  font-family: var(--font-arcade);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.related-note__text {
+  color: var(--cream-64);
+  font-size: 12px;
+  line-height: 1.7;
+}
