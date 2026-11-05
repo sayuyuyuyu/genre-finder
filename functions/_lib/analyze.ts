@@ -377,7 +377,9 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
 
   const recordFailure = (source: SourceName, message: string): void => {
     failedSources.push(source);
-    warnings.push(`${SOURCE_LABELS[source]} から情報を取得できませんでした（${message}）。`);
+    // HTTP ステータスは画面に出さず、やわらかい文言にする
+    const reason = message.startsWith('HTTP ') ? '一時的に利用できません' : message;
+    warnings.push(`${SOURCE_LABELS[source]} から情報を取得できませんでした（${reason}）。`);
   };
   if (!itunesAttempt.ok) recordFailure('itunes', itunesAttempt.error);
   if (!deezerAttempt.ok) recordFailure('deezer', deezerAttempt.error);

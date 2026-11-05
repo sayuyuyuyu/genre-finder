@@ -557,6 +557,7 @@ async function run() {
       await installMocks(warnPage);
       const warnFixture = fixture('analyze');
       warnFixture.judgment.failedSources = ['musicbrainz'];
+      warnFixture.judgment.confidence = 'low';
       warnFixture.judgment.warnings = [];
       await warnPage.route('**/api/analyze**', (route) => route.fulfill({ json: warnFixture }));
       await warnPage.goto(`${base}/`, { waitUntil: 'networkidle' });
@@ -573,6 +574,27 @@ async function run() {
       );
       await warnPage.screenshot({ path: join(artifacts, '19-warn-note.png'), fullPage: true });
       await warnPage.close();
+
+      // 判定が固まっているときは失敗の文章を出さない（ランプだけ）
+      const solidPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(solidPage);
+      const solidFixture = fixture('analyze');
+      solidFixture.judgment.failedSources = ['itunes'];
+      solidFixture.judgment.confidence = 'high';
+      await solidPage.route('**/api/analyze**', (route) => route.fulfill({ json: solidFixture }));
+      await solidPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await solidPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await solidPage.keyboard.press('Enter');
+      await solidPage.waitForSelector('button.track');
+      await solidPage.locator('button.track').first().click();
+      await solidPage.waitForSelector('.verdict__arcade');
+      check(
+        'judgment: 判定が固いときは失敗の文章を出さない',
+        (await solidPage.locator('.judgment__note--warn').count()) === 0 &&
+          (await solidPage.locator('.lamp--failed').count()) === 1,
+        'lamps only',
+      );
+      await solidPage.close();
 
       // 音声ファイル: ID3タグから検索
       const filePage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

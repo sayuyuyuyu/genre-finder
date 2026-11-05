@@ -4,7 +4,7 @@
  */
 
 import { cached } from './cache';
-import { fetchJson } from './http';
+import { FetchError, fetchJson, sleep } from './http';
 
 export interface ItunesTrack {
   trackId: number;
@@ -25,6 +25,39 @@ interface ItunesSearchResponse {
 }
 
 const ITUNES_BASE = 'https://itunes.apple.com';
+
+/**
+ * Apple 側のレート制限（429/403）対策。
+ * Cloudflare Workers の共有 IP から叩くと 429 が返ることがあるため、
+ * 失敗したら短時間は iTunes を呼ばずに他ソースへフォールバックする。
+ */
+const RATE_LIMIT_BLOCK_MS = 45_000;
+const RETRY_WAIT_MS = 250;
+let blockedUntil = 0;
+
+function isRateLimited(error: unknown): boolean {
+  return error instanceof FetchError && (error.status === 403 || error.status === 429);
+}
+
+async function itunesFetch<T>(url: string): Promise<T> {
+  if (Date.now() < blockedUntil) {
+    throw new FetchError('iTunes は一時的に利用できません', 429);
+  }
+  try {
+    return await fetchJson<T>(url);
+  } catch (error) {
+    if (!isRateLimited(error)) throw error;
+    // 1回だけ短い間隔で再試行する（別のコネクションに当たることがある）
+    await sleep(RETRY_WAIT_MS);
+    if (Date.now() < blockedUntil) throw error;
+    try {
+      return await fetchJson<T>(url);
+    } catch (retryError) {
+      if (isRateLimited(retryError)) blockedUntil = Date.now() + RATE_LIMIT_BLOCK_MS;
+      throw retryError;
+    }
+  }
+}
 
 function isSong(result: ItunesTrack & { wrapperType?: string; kind?: string }): boolean {
   return typeof result.trackId === 'number' && Boolean(result.trackName) && result.kind !== 'podcast';
@@ -55,8 +88,14 @@ export async function itunesSearch(
     country: options.country ?? 'jp',
   });
   if (options.attribute) params.set('attribute', options.attribute);
-  const data = await fetchJson<ItunesSearchResponse>(`${ITUNES_BASE}/search?${params.toString()}`);
-  return (data.results ?? []).filter(isSong);
+  // 短時間の重複検索を減らす（レート制限対策）
+  const key = `itunes-search:${params.toString()}`;
+  return cached(key, 600, async () => {
+    const data = await itunesFetch<ItunesSearchResponse>(
+      `${ITUNES_BASE}/search?${params.toString()}`,
+    );
+    return (data.results ?? []).filter(isSong);
+  });
 }
 
 const LOOKUP_TTL = 86_400;
@@ -68,7 +107,9 @@ export async function itunesLookup(id: string | number): Promise<ItunesTrack | n
 
 async function fetchItunesLookup(id: string | number): Promise<ItunesTrack | null> {
   const params = new URLSearchParams({ id: String(id), entity: 'song' });
-  const data = await fetchJson<ItunesSearchResponse>(`${ITUNES_BASE}/lookup?${params.toString()}`);
+  const data = await itunesFetch<ItunesSearchResponse>(
+    `${ITUNES_BASE}/lookup?${params.toString()}`,
+  );
   const results = (data.results ?? []).filter(isSong);
   return results[0] ?? null;
 }

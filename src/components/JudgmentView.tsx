@@ -28,8 +28,17 @@ export default function JudgmentView({
   onReset,
   onSearchArtist,
 }: JudgmentViewProps) {
-  const { track, primary, others, fineTags, evidence, failedSources, caveats, explanation } =
-    judgment;
+  const {
+    track,
+    primary,
+    others,
+    fineTags,
+    evidence,
+    failedSources,
+    caveats,
+    confidence,
+    explanation,
+  } = judgment;
   const genreInfo = judgment.genreInfo;
   const meta = trackMeta(track);
   const links = externalSearchLinks(track);
@@ -58,6 +67,12 @@ export default function JudgmentView({
     }
   }
   const failed = failedSources.length > 0;
+  // 判定が十分に固まっているときは、情報源の失敗はランプだけで示す（文章を出さない）
+  const showSourceIssues = !primary || confidence === 'low' || confidence === 'unknown';
+  const showFailedNote = failed && showSourceIssues;
+  const visibleWarnings = warnings.filter(
+    (warning) => showSourceIssues || !warning.includes('情報を取得できませんでした'),
+  );
 
   return (
     <article className="judgment" aria-labelledby="verdict-genre">
@@ -146,9 +161,9 @@ export default function JudgmentView({
         </div>
       </div>
 
-      {(caveats.length > 0 || failed || warnings.length > 0) && (
+      {(caveats.length > 0 || showFailedNote || visibleWarnings.length > 0) && (
         <ul className="judgment__notes" role="note">
-          {failed && (
+          {showFailedNote && (
             <li className="judgment__note judgment__note--warn">
               一部の情報源に接続できませんでした（
               {failedSources.map((source) => SOURCE_NAMES[source] ?? source).join(' / ')}）
@@ -159,7 +174,7 @@ export default function JudgmentView({
               {caveat}
             </li>
           ))}
-          {warnings.map((warning) => (
+          {visibleWarnings.map((warning) => (
             <li className="judgment__note" key={warning}>
               {warning}
             </li>
