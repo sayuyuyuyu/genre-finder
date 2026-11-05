@@ -13,7 +13,12 @@ import type {
   TrackCandidate,
 } from '../../shared/types';
 import { SOURCE_LABELS } from '../../shared/types';
-import { containsJapanese, normalize, normalizeText } from '../../shared/genre/normalize';
+import {
+  containsJapanese,
+  normalize,
+  normalizeText,
+  normalizeTitle,
+} from '../../shared/genre/normalize';
 import {
   aggregateGenres,
   confidenceLevel,
@@ -351,7 +356,15 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
   const [itunesAttempt, deezerAttempt, mbAttempt, lastfmAttempt] = await Promise.all([
     attempt(() => gatherItunes(input, title, artist)),
     attempt(() => gatherDeezer(input, title, artist)),
-    attempt(() => gatherMusicBrainz(title, artist)),
+    attempt(() =>
+      // 同じ曲を別経路（別バージョンの itunesId 等）で調べても MB を叩き直さない
+      cached(
+        // バージョン表記（Live / Remix 等）を除いた曲名でまとめる
+        `mb-gather:${normalizeTitle(title)}|${normalizeText(artist ?? '')}`,
+        86_400,
+        () => gatherMusicBrainz(title, artist),
+      ),
+    ),
     artist && lastfmKey
       ? attempt(() => lastfmTopTags(lastfmKey, artist, title))
       : Promise.resolve({ ok: true as const, value: [] as MbTag[] }),

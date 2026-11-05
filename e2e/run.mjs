@@ -657,6 +657,21 @@ async function run() {
       check('judgment: 同じアーティストで検索できる', artistQuery.includes('Toby Fox'), artistQuery);
       await artistPage.close();
 
+      // ジャンル索引（モバイル）
+      const genreMobile = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+        deviceScaleFactor: 2,
+        isMobile: true,
+        hasTouch: true,
+      });
+      await installMocks(genreMobile);
+      await genreMobile.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await genreMobile.getByRole('button', { name: 'GENRES' }).click();
+      await genreMobile.waitForSelector('.index-item', { timeout: 8000 });
+      check('genres: モバイルでも横スクロールなし', await noHorizontalOverflow(genreMobile));
+      await genreMobile.screenshot({ path: join(artifacts, '23-genres-mobile.png'), fullPage: true });
+      await genreMobile.close();
+
       // キーボードだけで検索できる
       const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
       await installMocks(kbPage);
