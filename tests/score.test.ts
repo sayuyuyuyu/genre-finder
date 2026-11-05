@@ -223,3 +223,27 @@ describe('電子系の傘（ダンス⇄エレクトロニック）の昇格', (
     expect(result.scores[0]?.id).toBe('hardstyle');
   });
 });
+
+describe('Soundtrack とゲーム優先の扱い', () => {
+  it('Soundtrack でも具体的な音楽ジャンルがあればそちらを primary にする', () => {
+    const result = aggregateGenres([
+      { source: 'itunes', raw: 'Soundtrack', canonicalId: 'soundtrack', weight: 0.9 },
+      { source: 'deezer', raw: 'Rap/Hip Hop', canonicalId: 'hip-hop', weight: 0.75 },
+    ]);
+    expect(result.primary?.id).toBe('hip-hop');
+  });
+
+  it('ゲーム優先ジャンルでも支持が弱ければ昇格しない（映画音楽をゲーム扱いしない）', () => {
+    const result = aggregateGenres(
+      [
+        { source: 'itunes', raw: 'Soundtrack', canonicalId: 'soundtrack', weight: 0.9 },
+        { source: 'musicbrainz', raw: 'modern classical', canonicalId: 'classical', weight: 0.69 },
+        { source: 'musicbrainz', raw: 'cinematic classical', canonicalId: 'classical', weight: 0.58 },
+        { source: 'musicbrainz', raw: 'classical', canonicalId: 'classical', weight: 0.54 },
+        { source: 'musicbrainz', raw: 'video game music', canonicalId: 'game-music', weight: 0.63 },
+      ],
+      { priorityIds: ['game-music'] },
+    );
+    expect(result.primary?.id).not.toBe('game-music');
+  });
+});

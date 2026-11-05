@@ -28,6 +28,8 @@ function sharesUmbrella(a: string, b: string): boolean {
 export const BROAD_PROMOTION_SUPPORT_RATIO = 0.3;
 /** broad から細分類への昇格条件（細分類の confidence が broad の何倍以上か）。 */
 export const BROAD_PROMOTION_CONFIDENCE_RATIO = 0.75;
+/** ゲーム優先ジャンルの昇格条件（支持重みが primary の own の何倍以上か）。 */
+export const GAME_PROMOTION_SUPPORT_RATIO = 0.4;
 /** 昇格時に broad の重みを細分類へ移す比率（表示の矛盾を防ぐ）。 */
 export const BROAD_TRANSFER_RATIO = 0.5;
 /** これ以上は信頼度を上げない。 */
@@ -177,16 +179,31 @@ export function aggregateGenres(
   /* --------------------- broad 首位のときの細分類への昇格 --------------------- */
   if (primary) {
     const broadDef = getGenre(primary.id);
-    if (broadDef?.broad) {
-      const broadId = primary.id;
+    const broadId = primary.id;
+    const isSoundtrackPrimary = broadId === 'soundtrack';
+    // 具体的なゲーム細分類が優先指定されているときは、ゲーム側の昇格に任せる
+    const hasSpecificPriority = (options.priorityIds ?? []).some((id) => {
+      const priorityDef = getGenre(id);
+      return Boolean(priorityDef && !priorityDef.broad);
+    });
+    if (
+      broadDef &&
+      (broadDef.broad || (isSoundtrackPrimary && !hasSpecificPriority))
+    ) {
       const broadOwn = buckets.get(broadId)?.own ?? 0;
       const broadConfidence = primary.confidence;
       const candidates = scores.filter((score) => {
         if (score.id === broadId) return false;
         const def = getGenre(score.id);
-        if (!def || def.broad) return false;
-        const sameFamily = sharesUmbrella(def.family, broadDef.family);
+        if (!def) return false;
+        // Soundtrack 以外では、傘（broad）へは戻さない
+        if (def.broad && !isSoundtrackPrimary) return false;
         const supportValue = support.get(score.id) ?? 0;
+        if (isSoundtrackPrimary) {
+          // 「Soundtrack」は作品の分類。具体的な音楽ジャンルの証拠があればそちらを優先する
+          return supportValue >= broadOwn * BROAD_PROMOTION_SUPPORT_RATIO;
+        }
+        const sameFamily = sharesUmbrella(def.family, broadDef.family);
         return (
           (sameFamily && supportValue >= broadOwn * BROAD_PROMOTION_SUPPORT_RATIO) ||
           score.confidence >= broadConfidence * BROAD_PROMOTION_CONFIDENCE_RATIO
@@ -209,7 +226,8 @@ export function aggregateGenres(
         const chosenDef = getGenre(chosen.id);
         const transferable = Boolean(
           chosenDef &&
-            (sharesUmbrella(chosenDef.family, broadDef.family) ||
+            (isSoundtrackPrimary ||
+              sharesUmbrella(chosenDef.family, broadDef.family) ||
               isDescendantOf(chosen.id, broadId)),
         );
         if (transferable) {
@@ -237,8 +255,17 @@ export function aggregateGenres(
     const primaryDef = getGenre(currentPrimary.id);
     const needsPromotion = Boolean(primaryDef?.broad) || currentPrimary.id === 'soundtrack';
     if (needsPromotion) {
+      const primaryOwn2 = buckets.get(currentPrimary.id)?.own ?? 0;
       const candidates = scores
-        .filter((score) => priorityIds.includes(score.id) && score.id !== currentPrimary.id)
+        .filter((score) => {
+          if (!priorityIds.includes(score.id) || score.id === currentPrimary.id) return false;
+          // 優先ジャンルでも、支持が弱すぎる場合は昇格させない（映画音楽をゲーム扱いしない等）
+          const supportValue = support.get(score.id) ?? 0;
+          return (
+            supportValue >= primaryOwn2 * GAME_PROMOTION_SUPPORT_RATIO ||
+            score.confidence >= currentPrimary.confidence * BROAD_PROMOTION_CONFIDENCE_RATIO
+          );
+        })
         .sort((a, b) => b.confidence - a.confidence);
       const chosen = candidates[0];
       if (chosen) {
@@ -274,6 +301,17 @@ export function aggregateGenres(
       const cap = hasFineEvidence ? BROAD_CONFIDENCE_CAP : COARSE_CONFIDENCE_CAP;
       for (const score of scores) {
         score.confidence = round3(Math.min(score.confidence, cap));
+      }
+    } else {
+      // 細分類でも、iTunes / Deezer の粗いラベルだけが根拠なら過信しない
+      const primaryEvidence = evidence.filter((item) => item.canonicalId === primary?.id);
+      const coarseOnly =
+        primaryEvidence.length > 0 &&
+        primaryEvidence.every((item) => item.source === 'itunes' || item.source === 'deezer');
+      if (coarseOnly) {
+        for (const score of scores) {
+          score.confidence = round3(Math.min(score.confidence, COARSE_CONFIDENCE_CAP));
+        }
       }
     }
   }

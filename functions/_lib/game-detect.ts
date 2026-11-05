@@ -88,11 +88,12 @@ const GAME_RULES: GameRule[] = [
     pattern:
       /ゲーム音楽|ゲームミュージック|video game music|\bvgm\b|game music|game soundtrack|ゲームサウンドトラック|ゲームbgm|ゲームost/i,
   },
-  // ゲーム全般・BGM・サントラ（やや弱め）
+  // ゲーム全般・BGM（やや弱め）
+  // 注意: 単なる "Soundtrack" / "サントラ" は映画・ドラマにも付くのでゲーム判定には使わない
   {
     id: 'game-music',
     weight: 0.5,
-    pattern: /ゲーム|\bgame\b|\bbgm\b|original soundtrack|\bsoundtrack\b|サウンドトラック|サントラ|\bost\b/i,
+    pattern: /ゲーム|\bgame\b|\bbgm\b|\bost\b/i,
   },
   // ボカロ（ゲーム音楽の文脈でもよく出る）
   { id: 'vocaloid', weight: 0.55, pattern: /vocaloid|ボカロ|ボーカロイド|初音ミク|hatsune miku/i },

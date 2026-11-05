@@ -36,9 +36,16 @@ describe('detectGameMusic（ゲーム音楽らしさの検出）', () => {
     expect(ids([field('アルバム名', 'PC-98 FM音源全集')])).toContain('fm-synth');
   });
 
-  it('ゲーム音楽 / Original Soundtrack は game-music', () => {
+  it('ゲーム音楽の明示語は game-music', () => {
     expect(ids([field('アルバム名', 'ゲーム音楽ベスト')])).toContain('game-music');
-    expect(ids([field('アルバム名', 'Original Soundtrack')])).toContain('game-music');
+    expect(ids([field('アルバム名', 'Original Game Soundtrack')])).toContain('game-music');
+  });
+
+  it('単なる "Original Soundtrack" は映画にも付くのでゲーム判定に使わない', () => {
+    expect(ids([field('アルバム名', 'Original Soundtrack')])).not.toContain('game-music');
+    expect(ids([field('アルバム名', 'Interstellar Original Soundtrack')])).not.toContain(
+      'game-music',
+    );
   });
 
   it('ノベルゲーム系は visual-novel', () => {
