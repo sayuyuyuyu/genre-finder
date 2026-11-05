@@ -2,7 +2,9 @@
 
 曲名・音声ファイル・Spotify / YouTube のリンクから、その曲のジャンルを根拠つきで判定する Web アプリです。
 
-![これ何ジャンル？の画面](docs/screenshot.png)
+![これ何ジャンル？の判定画面](docs/screenshot.png)
+
+![IIDX風の選曲リスト](docs/screenshot-results.png)
 
 - 公開先（Cloudflare Pages）: <https://genre.slytxt.dev>
 - 予備の URL: <https://genre-finder.pages.dev>
