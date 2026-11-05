@@ -28,6 +28,28 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
 }
 
+
+/** テスト用の ID3v2.3 タグ付き MP3 バイト列を作る。 */
+function makeTaggedMp3(frames) {
+  const frameBuffers = frames.map((frame) => {
+    const body = Buffer.concat([Buffer.from([0x03]), Buffer.from(frame.text, 'utf8')]); // UTF-8
+    const header = Buffer.alloc(10);
+    header.write(frame.id, 0, 'ascii');
+    header.writeUInt32BE(body.length, 4);
+    return Buffer.concat([header, body]);
+  });
+  const frameData = Buffer.concat(frameBuffers);
+  const size = frameData.length;
+  const synchsafe = Buffer.from([
+    (size >> 21) & 0x7f,
+    (size >> 14) & 0x7f,
+    (size >> 7) & 0x7f,
+    size & 0x7f,
+  ]);
+  const header = Buffer.concat([Buffer.from('ID3'), Buffer.from([0x03, 0x00, 0x00]), synchsafe]);
+  return Buffer.concat([header, frameData, Buffer.alloc(2048)]);
+}
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function installMocks(page) {
@@ -525,6 +547,54 @@ async function run() {
       );
       await warnPage.screenshot({ path: join(artifacts, '19-warn-note.png'), fullPage: true });
       await warnPage.close();
+
+      // 音声ファイル: ID3タグから検索
+      const filePage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(filePage);
+      await filePage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      const tagged = makeTaggedMp3([
+        { id: 'TIT2', text: 'Megalovania' },
+        { id: 'TPE1', text: 'Toby Fox' },
+      ]);
+      await filePage.setInputFiles('#audio-file', {
+        name: 'tagged.mp3',
+        mimeType: 'audio/mpeg',
+        buffer: tagged,
+      });
+      await filePage.waitForSelector('button.track', { timeout: 12000 });
+      const tagNotice = await filePage.locator('.notice').innerText().catch(() => '');
+      check(
+        'file: ID3タグから検索できる',
+        tagNotice.includes('Megalovania') && tagNotice.includes('Toby Fox'),
+        tagNotice.slice(0, 60),
+      );
+      await filePage.screenshot({ path: join(artifacts, '20-file-tags.png'), fullPage: true });
+
+      // 音声ファイル: タグが無ければファイル名から推測
+      await filePage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await filePage.setInputFiles('#audio-file', {
+        name: '02 - Daft Punk - Get Lucky.mp3',
+        mimeType: 'audio/mpeg',
+        buffer: Buffer.alloc(2048),
+      });
+      await filePage.waitForSelector('button.track', { timeout: 12000 });
+      const filenameNotice = await filePage.locator('.notice').innerText().catch(() => '');
+      check(
+        'file: タグが無ければファイル名から推測する',
+        filenameNotice.includes('Get Lucky') && filenameNotice.includes('Daft Punk'),
+        filenameNotice.slice(0, 70),
+      );
+      // 音声ファイル以外はやさしく弾く
+      await filePage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await filePage.setInputFiles('#audio-file', {
+        name: 'notes.txt',
+        mimeType: 'text/plain',
+        buffer: Buffer.from('not audio', 'utf8'),
+      });
+      await filePage.waitForSelector('.error-card', { timeout: 10000 });
+      const fileError = await filePage.locator('.error-card').innerText();
+      check('file: 音声ファイル以外はエラー表示', fileError.includes('音声ファイル'), fileError.split('\n')[1] ?? '');
+      await filePage.close();
 
       // キーボードだけで検索できる
       const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

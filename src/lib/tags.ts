@@ -138,9 +138,9 @@ export async function readAudioMetadata(file: File): Promise<AudioMetadata> {
       note = `タグから「${tagTitle}」を読み取りました。`;
     }
   } else if (tagError) {
-    note = `タグを読み取れませんでした（${tagError}）。ファイル名から「${describeGuess(title, artist)}」と推測して検索します。`;
+    note = `ファイル名の「${describeGuess(title, artist)}」で検索します（タグは読み取れませんでした）。`;
   } else {
-    note = `タグが見つかりませんでした。ファイル名から「${describeGuess(title, artist)}」と推測して検索します。`;
+    note = `ファイル名の「${describeGuess(title, artist)}」で検索します（タグがありません）。`;
   }
 
   return { title, artist, note };
