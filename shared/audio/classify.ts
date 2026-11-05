@@ -147,10 +147,11 @@ export function classifyAudio(features: AudioFeatures): AudioVerdict {
 
 /** 音響特徴を画面表示用の短い一行にする（数値の羅列）。 */
 export function describeAudio(features: AudioFeatures): string {
+  const percent = (value: number): number => Math.round(Math.max(0, Math.min(1, value)) * 100);
   const parts: string[] = [];
   if (features.bpm > 0) parts.push(`${Math.round(features.bpm)} BPM`);
-  parts.push(`4OTF ${Math.round(features.fourOnFloor * 100)}%`);
+  parts.push(`4OTF ${percent(features.fourOnFloor)}%`);
   parts.push(`明るさ ${Math.round(features.brightness)}`);
-  parts.push(`ノイズ ${Math.round(features.flatness * 100)}%`);
+  parts.push(`ノイズ ${percent(features.flatness)}%`);
   return parts.join(' · ');
 }

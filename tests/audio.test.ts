@@ -109,6 +109,17 @@ describe('音響特徴（DSP）', () => {
     expect(verdict.confidence).toBe(0);
   });
 
+  it('無音区間があっても特徴量は 0-1 に収まる', () => {
+    const samples = new Float32Array(Math.round(6 * SR));
+    const tone = sine(440, 2, SR);
+    samples.set(tone, 0); // 2秒音 → 4秒無音
+    const { features } = extractFeatures(samples, SR);
+    expect(features.flatness).toBeGreaterThanOrEqual(0);
+    expect(features.flatness).toBeLessThanOrEqual(1);
+    expect(features.lowRatio).toBeLessThanOrEqual(1);
+    expect(features.highRatio).toBeLessThanOrEqual(1);
+  });
+
   it('短すぎる音声は解析対象外', () => {
     const { features } = extractFeatures(sine(440, 1, SR), SR);
     expect(classifyAudio(features).votes).toEqual([]);

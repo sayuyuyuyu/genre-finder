@@ -259,9 +259,13 @@ export function extractFeatures(samples: Float32Array, sampleRate: number): Audi
       frameTotal += magnitude * magnitude;
     }
     const centroid = magnitudeSum > 0 ? centroidNumerator / magnitudeSum : 0;
+    // 静かなフレームでは幾何平均/算術平均の比が発散するため、0 扱いにしてクランプする
     const flatness =
-      magnitudeSum > 0
-        ? Math.exp(logSum / (nyquistBin - 1)) / (magnitudeSum / (nyquistBin - 1) + 1e-12)
+      magnitudeSum > 1e-6
+        ? Math.min(
+            1,
+            Math.exp(logSum / (nyquistBin - 1)) / Math.max(1e-9, magnitudeSum / (nyquistBin - 1)),
+          )
         : 0;
 
     let flux = 0;
@@ -343,8 +347,8 @@ export function extractFeatures(samples: Float32Array, sampleRate: number): Audi
       onsetDensity,
       brightness: meanOf(centroidValues),
       flatness: meanOf(flatnessValues),
-      lowRatio: totalEnergy > 0 ? lowEnergyTotal / totalEnergy : 0,
-      highRatio: totalEnergy > 0 ? highEnergyTotal / totalEnergy : 0,
+      lowRatio: totalEnergy > 0 ? Math.min(1, lowEnergyTotal / totalEnergy) : 0,
+      highRatio: totalEnergy > 0 ? Math.min(1, highEnergyTotal / totalEnergy) : 0,
       dynamicRange: Math.max(0, dynamicRange),
       zeroCrossingRate: zeroCrossings / sampleCount,
       rms: meanEnergy,
