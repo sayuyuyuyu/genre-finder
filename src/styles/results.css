@@ -373,3 +373,19 @@
   border-color: var(--line-amber);
   color: var(--amber);
 }
+
+/* 選曲カーソル（↑↓ で移動、Enter で判定） */
+.track.is-active {
+  border-color: var(--line-amber);
+  background: var(--surface);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+
+.track.is-active .track__arrow {
+  color: var(--amber);
+  transform: translateX(3px);
+}
+
+.track.is-active .track__title {
+  color: var(--amber-bright);
+}

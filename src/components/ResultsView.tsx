@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SOURCE_LABELS } from '@shared/types';
 import type { TrackCandidate } from '@shared/types';
 import TrackArtwork from '@/components/TrackArtwork';
@@ -25,6 +25,45 @@ export default function ResultsView({
   const [showCovers, setShowCovers] = useState(true);
   const coverCount = tracks.filter((track) => track.isCover).length;
   const visibleTracks = showCovers ? tracks : tracks.filter((track) => !track.isCover);
+
+  // 選曲カーソル（↑↓ で移動、Enter で判定）
+  const [cursor, setCursor] = useState(0);
+  const listRef = useRef<HTMLOListElement>(null);
+
+  useEffect(() => {
+    setCursor(0);
+  }, [visibleTracks.length, showCovers]);
+
+  useEffect(() => {
+    function isInteractive(element: Element | null): boolean {
+      return Boolean(element?.closest('a, button, input, textarea, select, [contenteditable="true"]'));
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (isInteractive(document.activeElement)) return;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        setCursor((prev) => {
+          const next = event.key === 'ArrowDown' ? prev + 1 : prev - 1;
+          return Math.max(0, Math.min(visibleTracks.length - 1, next));
+        });
+        return;
+      }
+      if (event.key === 'Enter' && visibleTracks[cursor]) {
+        event.preventDefault();
+        onSelect(visibleTracks[cursor]);
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [cursor, visibleTracks, onSelect]);
+
+  // カーソルが動いたら見える位置までスクロール
+  useEffect(() => {
+    const active = listRef.current?.querySelector<HTMLElement>('.track.is-active');
+    active?.scrollIntoView({ block: 'nearest' });
+  }, [cursor]);
 
   return (
     <section className="stage" aria-labelledby="results-title">
@@ -96,10 +135,16 @@ export default function ResultsView({
           </div>
         </div>
       ) : (
-        <ol className="results">
+        <ol className="results" ref={listRef}>
           {visibleTracks.map((track, index) => (
             <li key={track.id || `${track.source}-${track.sourceId}-${index}`}>
-              <TrackRow track={track} index={index} featured={index === 0} onSelect={onSelect} />
+              <TrackRow
+                track={track}
+                index={index}
+                featured={index === 0}
+                active={index === cursor}
+                onSelect={onSelect}
+              />
             </li>
           ))}
         </ol>
@@ -123,11 +168,13 @@ interface TrackRowProps {
   track: TrackCandidate;
   index: number;
   featured: boolean;
+  /** 選曲カーソルが当たっている行。 */
+  active?: boolean;
   onSelect: (track: TrackCandidate) => void;
 }
 
 /** IIDX の選曲リストのように、番号・ジャンル・時間を並べた1行。 */
-function TrackRow({ track, index, featured, onSelect }: TrackRowProps) {
+function TrackRow({ track, index, featured, active = false, onSelect }: TrackRowProps) {
   // 時間は右端に出すので、メタ情報はアルバムと年だけ
   const meta = [track.album, track.year ? String(track.year) : null]
     .filter((part): part is string => Boolean(part))
@@ -138,7 +185,8 @@ function TrackRow({ track, index, featured, onSelect }: TrackRowProps) {
   return (
     <button
       type="button"
-      className={`track${featured ? ' track--featured' : ''}`}
+      className={`track${featured ? ' track--featured' : ''}${active ? ' is-active' : ''}`}
+      data-active={active ? 'true' : undefined}
       onClick={() => onSelect(track)}
       aria-label={`${track.title} / ${track.artist} のジャンルを調べる`}
     >

@@ -437,6 +437,25 @@ async function run() {
       check('history: 戻るで検索結果に戻れる', !backPage.url().includes('?t='), backPage.url());
       await backPage.close();
 
+      // 選曲カーソル（↑↓ + Enter）
+      const cursorPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(cursorPage);
+      await cursorPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await cursorPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await cursorPage.keyboard.press('Enter');
+      await cursorPage.waitForSelector('button.track');
+      await cursorPage.keyboard.press('ArrowDown');
+      const activeIndex = await cursorPage.evaluate(() =>
+        Array.from(document.querySelectorAll('button.track')).findIndex((el) =>
+          el.classList.contains('is-active'),
+        ),
+      );
+      await cursorPage.screenshot({ path: join(artifacts, '18-cursor.png'), fullPage: true });
+      await cursorPage.keyboard.press('Enter');
+      await cursorPage.waitForSelector('.verdict__arcade', { timeout: 8000 });
+      check('results: ↑↓で選曲カーソルが動き Enter で判定', activeIndex === 1, `active=${activeIndex}`);
+      await cursorPage.close();
+
       // キーボードだけで検索できる
       const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
       await installMocks(kbPage);
