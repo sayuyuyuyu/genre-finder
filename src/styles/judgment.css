@@ -671,3 +671,20 @@
   color: var(--amber);
   letter-spacing: 0.16em;
 }
+
+.verdict__work-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--amber);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    border-color 0.18s var(--ease),
+    color 0.18s var(--ease);
+}
+
+.verdict__work-link:hover {
+  border-bottom-color: var(--line-amber);
+  color: var(--amber-bright);
+}

@@ -30,7 +30,16 @@ export default function Verdict({ judgment }: VerdictProps) {
       {judgment.workTitle && (
         <p className="verdict__work">
           <span className="verdict__work-label">WORK</span>
-          {judgment.workTitle}
+          <a
+            className="verdict__work-link"
+            href={`https://music.apple.com/jp/search?term=${encodeURIComponent(judgment.workTitle)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${judgment.workTitle} を Apple Music で探す`}
+          >
+            {judgment.workTitle}
+            <span aria-hidden="true">↗</span>
+          </a>
         </p>
       )}
 

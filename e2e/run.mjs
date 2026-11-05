@@ -127,6 +127,12 @@ async function run() {
     if (mode === 'mock') {
       const work = await page.locator('.verdict__work').count();
       check('judgment: ゲーム作品名が出る', work === 1, `${work} 個`);
+      const workHref = await page.locator('.verdict__work-link').getAttribute('href');
+      check(
+        'judgment: 作品名がApple Music検索にリンク',
+        (workHref ?? '').includes('music.apple.com') && (workHref ?? '').includes('UNDERTALE'),
+        workHref ?? '',
+      );
 
       // SPECTRUM を押すと DATA FEED がそのジャンルの根拠に絞られる
       const allRows = await page.locator('.feed__row').count();
@@ -160,6 +166,15 @@ async function run() {
     const recentCount = await page.locator('.recent__row').count();
     await page.screenshot({ path: join(artifacts, '06-recent.png'), fullPage: true });
     check('recent: 履歴が残る', recentCount >= 1, `${recentCount} 件`);
+
+    // RANDOM（おまかせ）で1曲選ぶ
+    check('random: ボタンがある', (await page.getByRole('button', { name: /RANDOM/ }).count()) === 1);
+    if (mode === 'mock') {
+      await page.getByRole('button', { name: /RANDOM/ }).click();
+      await page.waitForSelector('button.track', { timeout: 8000 });
+      check('random: おまかせで結果が出る', (await page.locator('button.track').count()) > 0);
+      await page.screenshot({ path: join(artifacts, '12-random.png'), fullPage: true });
+    }
 
     // 共有URL（?t=&a=）で開く
     await page.goto(`${base}/?t=Megalovania&a=Toby%20Fox`, { waitUntil: 'networkidle' });
