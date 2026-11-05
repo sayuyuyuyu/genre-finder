@@ -56,6 +56,7 @@ async function installMocks(page) {
   const search = fixture('search');
   const analyze = fixture('analyze');
   const resolve = fixture('resolve');
+  const genres = fixture('genres');
   await page.route('**/api/search**', async (route) => {
     await delay(1000);
     await route.fulfill({ json: search });
@@ -68,6 +69,7 @@ async function installMocks(page) {
     await delay(300);
     await route.fulfill({ json: resolve });
   });
+  await page.route('**/api/genres**', (route) => route.fulfill({ json: genres }));
 }
 
 /** 画像の読み込みを待つ。間に合わなくてもスクショは撮る。 */
@@ -201,6 +203,26 @@ async function run() {
     await page.reload({ waitUntil: 'networkidle' });
     await page.screenshot({ path: join(artifacts, '01-idle.png'), fullPage: true });
     check('idle: 検索入力がある', await page.locator('input').first().isVisible());
+
+    // ジャンル索引（GENRES）
+    await page.getByRole('button', { name: 'GENRES' }).click();
+    await page.waitForSelector('.index-panel');
+    await page.waitForSelector('.index-item', { timeout: 8000 });
+    const indexCount = await page.locator('.index-item').count();
+    check(
+      mode === 'mock' ? 'genres: 一覧が開く' : 'genres: 一覧が開く（実データ）',
+      mode === 'mock' ? indexCount === 6 : indexCount >= 50,
+      `${indexCount} 件`,
+    );
+    await page.screenshot({ path: join(artifacts, '22-genres.png'), fullPage: true });
+    if (mode === 'mock') {
+      await page.locator('.index-panel__search').fill('CHIP');
+      await page.waitForTimeout(120);
+      check('genres: 絞り込みが効く', (await page.locator('.index-item').count()) === 1);
+    }
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(120);
+    check('genres: Escape で閉じる', (await page.locator('.index-panel').count()) === 0);
 
     // メタ情報（共有カード・ホーム画面追加用）
     const meta = await page.evaluate(() => ({

@@ -1,0 +1,11 @@
+{
+  "families": ["ゲームミュージック", "エレクトロニック", "ポップス"],
+  "genres": [
+    { "id": "chiptune", "labelJa": "チップチューン", "labelEn": "Chiptune", "arcade": "CHIPTUNE", "family": "ゲームミュージック", "tagline": "ピコピコ。耳が喜ぶやつ。" },
+    { "id": "game-music", "labelJa": "ゲーム音楽", "labelEn": "Game Music", "arcade": "GAME MUSIC", "family": "ゲームミュージック", "tagline": "ゲームの記憶ごと鳴らす。" },
+    { "id": "touhou-arrange", "labelJa": "東方アレンジ", "labelEn": "Touhou Arrange", "arcade": "TOUHOU", "family": "ゲームミュージック", "tagline": "幻想郷の音。" },
+    { "id": "house", "labelJa": "ハウス", "labelEn": "House", "arcade": "HOUSE", "family": "エレクトロニック", "tagline": "4つ打ち。夜が長くなるやつ。" },
+    { "id": "eurobeat", "labelJa": "ユーロビート", "labelEn": "Eurobeat", "arcade": "EUROBEAT", "family": "エレクトロニック", "tagline": "頭文字Dの速度感。" },
+    { "id": "j-pop", "labelJa": "J-POP", "labelEn": "J-Pop", "arcade": "J-POP", "family": "ポップス", "tagline": "日本語の歌詞が主役。サビで空が開く。" }
+  ]
+}

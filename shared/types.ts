@@ -123,6 +123,21 @@ export interface GenreJudgment {
   };
 }
 
+/** ジャンル一覧（/api/genres）の1件。 */
+export interface GenreIndexEntry {
+  id: string;
+  labelJa: string;
+  labelEn: string;
+  arcade: string;
+  family: string;
+  tagline?: string;
+}
+
+export interface GenreIndexResponse {
+  families: string[];
+  genres: GenreIndexEntry[];
+}
+
 /* ---------------------------------- API ---------------------------------- */
 
 export interface SearchResponse {

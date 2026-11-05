@@ -1,6 +1,7 @@
 import type {
   AnalyzeResponse,
   ApiError,
+  GenreIndexResponse,
   GenreJudgment,
   ResolveResponse,
   SearchResponse,
@@ -157,4 +158,19 @@ export async function fetchResolve(url: string, signal?: AbortSignal): Promise<R
     tracks: data.tracks,
     warnings: Array.isArray(data.warnings) ? data.warnings : [],
   };
+}
+
+/** ジャンル一覧（初回のみ取得して使い回す）。 */
+let genreIndexPromise: Promise<GenreIndexResponse> | null = null;
+
+export function fetchGenreIndex(): Promise<GenreIndexResponse> {
+  // 全体で1回だけ取得する。AbortSignal は渡さない（React StrictMode の
+  // 二重マウントでキャッシュ中の Promise を中断してしまわないように）。
+  if (!genreIndexPromise) {
+    genreIndexPromise = getJson<GenreIndexResponse>('/api/genres').catch((error) => {
+      genreIndexPromise = null;
+      throw error;
+    });
+  }
+  return genreIndexPromise;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import DropZone from '@/components/DropZone';
 import ErrorView from '@/components/ErrorView';
 import ExampleChips from '@/components/ExampleChips';
+import GenreIndex from '@/components/GenreIndex';
 import RecentList from '@/components/RecentList';
 import Hero from '@/components/Hero';
 import JudgmentView from '@/components/JudgmentView';
@@ -22,6 +23,7 @@ export default function App() {
   // 共有URL（?t=曲名&a=アーティスト）から開かれたら、その場で判定する
   const initialShare = useRef(readSharedQuery(window.location.search)).current;
   const [input, setInput] = useState('');
+  const [showGenreIndex, setShowGenreIndex] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const { phase, judgment, tracks, error, selectedTrack, readingFile } = finder;
 
@@ -96,7 +98,7 @@ export default function App() {
       <a className="skip-link" href="#main">
         本文へスキップ
       </a>
-      <SiteHeader />
+      <SiteHeader onOpenGenres={() => setShowGenreIndex(true)} />
       <main id="main" className="main" tabIndex={-1}>
         {phase === 'idle' ? (
           <Hero />
@@ -174,6 +176,8 @@ export default function App() {
           )}
         </div>
       </main>
+      {showGenreIndex && <GenreIndex onClose={() => setShowGenreIndex(false)} />}
+
       <footer className="site-footer">
         <div className="site-footer__inner">
           <p>iTunes / Deezer / MusicBrainz の情報を突き合わせて判定します。</p>

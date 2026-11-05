@@ -1,4 +1,8 @@
-export default function SiteHeader() {
+interface SiteHeaderProps {
+  onOpenGenres: () => void;
+}
+
+export default function SiteHeader({ onOpenGenres }: SiteHeaderProps) {
   return (
     <header className="site-header">
       <div className="site-header__inner">
@@ -33,9 +37,14 @@ export default function SiteHeader() {
             <span className="brand__sub">GENRE IDENTIFIER</span>
           </span>
         </div>
-        <p className="site-header__meta" aria-hidden="true">
-          iTunes / Deezer / MusicBrainz
-        </p>
+        <div className="site-header__right">
+          <p className="site-header__meta" aria-hidden="true">
+            iTunes / Deezer / MusicBrainz
+          </p>
+          <button type="button" className="site-header__genres" onClick={onOpenGenres}>
+            GENRES
+          </button>
+        </div>
       </div>
     </header>
   );
