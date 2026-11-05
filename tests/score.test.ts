@@ -138,6 +138,32 @@ describe('aggregateGenres', () => {
     }
   });
 
+  it('ゲーム検出の優先ジャンルは coarse な大分類より昇格する', () => {
+    const evidenceList = [
+      evidence('itunes', 'Dance', ITUNES_WEIGHT),
+      evidence('deezer', 'Dance', DEEZER_WEIGHT),
+      evidence('itunes', 'touhou', 0.75),
+      evidence('itunes', 'ゲーム音楽', 0.5),
+    ];
+    // 優先指定が無ければ Dance（大分類）のまま
+    expect(aggregateGenres(evidenceList).primary?.id).toBe('dance');
+
+    const promoted = aggregateGenres(evidenceList, { priorityIds: ['touhou-arrange'] });
+    expect(promoted.primary?.id).toBe('touhou-arrange');
+    expect(promoted.primary?.arcade).toBe('TOUHOU');
+    expect(promoted.primary?.confidence).toBeGreaterThanOrEqual(
+      promoted.others[0]?.confidence ?? 0,
+    );
+  });
+
+  it('primary が細分類なら優先ジャンルでも昇格しない', () => {
+    const result = aggregateGenres(
+      [evidence('itunes', 'J-Pop', ITUNES_WEIGHT), evidence('itunes', 'touhou', 0.75)],
+      { priorityIds: ['touhou-arrange'] },
+    );
+    expect(result.primary?.id).toBe('j-pop');
+  });
+
   it('証拠が無ければ primary は null', () => {
     const result = aggregateGenres([]);
     expect(result.primary).toBeNull();

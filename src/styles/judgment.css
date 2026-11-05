@@ -532,3 +532,80 @@
     transition: none;
   }
 }
+
+/* ------------------------------ preview play ------------------------------ */
+
+.preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cream-48);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: color 0.18s var(--ease);
+}
+
+.preview:hover {
+  color: var(--cream);
+}
+
+.preview__ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+}
+
+.preview__ring svg {
+  transform: rotate(-90deg);
+}
+
+.preview__track {
+  fill: none;
+  stroke: rgba(245, 239, 230, 0.16);
+  stroke-width: 1.5;
+}
+
+.preview__progress {
+  fill: none;
+  stroke: var(--amber);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+.preview__icon {
+  position: absolute;
+  display: grid;
+  place-items: center;
+}
+
+.preview__play {
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-top: 4.5px solid transparent;
+  border-bottom: 4.5px solid transparent;
+  border-left: 7px solid currentColor;
+}
+
+.preview__pause {
+  width: 6px;
+  height: 9px;
+  background: linear-gradient(90deg, currentColor 0 2px, transparent 2px 4px, currentColor 4px 6px);
+}
+
+.preview.is-playing {
+  color: var(--amber);
+}
+
+.preview.is-playing .preview__track {
+  stroke: rgba(232, 176, 75, 0.28);
+}

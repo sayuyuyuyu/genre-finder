@@ -55,6 +55,8 @@ async function run() {
 
     // idle
     await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+    await page.evaluate(() => window.localStorage.clear());
+    await page.reload({ waitUntil: 'networkidle' });
     await page.screenshot({ path: join(artifacts, '01-idle.png'), fullPage: true });
     check('idle: 検索入力がある', await page.locator('input').first().isVisible());
 
@@ -86,6 +88,8 @@ async function run() {
     check('judgment: SPECTRUM が 2 行以上', spectrum >= 2, `${spectrum} 行`);
     check('judgment: DATA FEED が 1 行以上', feed >= 1, `${feed} 行`);
     check('judgment: コメントが 1 行', comment.length > 0 && comment.length < 60);
+    const preview = await page.locator('.preview').count();
+    check('judgment: 試聴ボタンがある', preview === 1, `${preview} 個`);
 
     // リンク貼り付け
     await page.getByRole('button', { name: /別の曲/ }).first().click();
@@ -95,6 +99,13 @@ async function run() {
     await page.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 30000 });
     await page.screenshot({ path: join(artifacts, '04-link.png'), fullPage: true });
     check('link: リンクから候補が出る', (await page.locator('button.track').count()) > 0);
+
+    // 履歴: 判定 → アイドルに戻ると RECENT に残る
+    await page.getByRole('button', { name: /別の曲/ }).first().click();
+    await page.waitForSelector('.recent__row', { timeout: 8000 });
+    const recentCount = await page.locator('.recent__row').count();
+    await page.screenshot({ path: join(artifacts, '06-recent.png'), fullPage: true });
+    check('recent: 履歴が残る', recentCount >= 1, `${recentCount} 件`);
 
     // モバイル
     const mobile = await browser.newPage({

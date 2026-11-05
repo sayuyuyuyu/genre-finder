@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import DropZone from '@/components/DropZone';
 import ErrorView from '@/components/ErrorView';
 import ExampleChips from '@/components/ExampleChips';
+import RecentList from '@/components/RecentList';
 import Hero from '@/components/Hero';
 import JudgmentView from '@/components/JudgmentView';
 import ResultsView from '@/components/ResultsView';
@@ -9,9 +10,12 @@ import SearchPanel from '@/components/SearchPanel';
 import SiteHeader from '@/components/SiteHeader';
 import { JudgmentSkeleton, ResultsSkeleton } from '@/components/Skeletons';
 import { useGenreFinder } from '@/hooks/useGenreFinder';
+import { useRecent } from '@/hooks/useRecent';
+import { arcadeOf } from '@/lib/arcade';
 
 export default function App() {
   const finder = useGenreFinder();
+  const recent = useRecent();
   const [input, setInput] = useState('');
   const stageRef = useRef<HTMLDivElement>(null);
   const { phase, judgment, tracks, error, selectedTrack, readingFile } = finder;
@@ -40,6 +44,17 @@ export default function App() {
       document.title = base;
     }
   }, [phase, judgment, tracks.length]);
+
+  // 判定が終わったら履歴に積む（同じ曲は1件にまとめる）
+  useEffect(() => {
+    if (phase !== 'judgment' || !judgment) return;
+    recent.add({
+      track: judgment.track,
+      arcade: judgment.primary ? arcadeOf(judgment.primary) : 'UNKNOWN',
+      labelJa: judgment.primary?.labelJa ?? '判定不能',
+      at: Date.now(),
+    });
+  }, [phase, judgment, recent.add]);
 
   function handleSearch() {
     finder.search(input);
@@ -93,6 +108,13 @@ export default function App() {
           <>
             <DropZone onFile={handleFile} reading={readingFile} />
             <ExampleChips onPick={handleExample} />
+            <RecentList
+              items={recent.items}
+              onPick={(entry) => {
+                void finder.analyzeTrack(entry.track);
+              }}
+              onClear={recent.clear}
+            />
           </>
         )}
 

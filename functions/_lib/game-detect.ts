@@ -35,49 +35,49 @@ const GAME_RULES: GameRule[] = [
   // 東方アレンジ（作品名・代表曲も拾う）
   {
     id: 'touhou-arrange',
-    weight: 0.7,
+    weight: 0.75,
     pattern:
       /東方プロジェクト|東方アレンジ|東方|touhou|bad apple|少女綺想曲|魔理沙|u\.n\. owen|ネクロファンタジア|亡き王女/i,
   },
   // 音ゲー（BMS / IIDX / DDR など）
   {
     id: 'rhythm-game',
-    weight: 0.7,
+    weight: 0.75,
     pattern:
       /beatmania|\biidx\b|\bbms\b|\bddr\b|dance dance revolution|音ゲー|リズムゲーム|rhythm game|\bosu!\b|太鼓の達人|jubeat|maimai|chunithm|guitar freaks|drummania/i,
   },
   // チップチューン（8bit / ファミコン）
   {
     id: 'chiptune',
-    weight: 0.65,
+    weight: 0.7,
     pattern:
       /chiptune|チップチューン|8-?bit|ファミコン|famicom|\bnes\b|ピコピコ|ゲームボーイ|game boy|スーファミ|super famicom|\bsnes\b/i,
   },
   // FM音源（PC-88/98）
-  { id: 'fm-synth', weight: 0.65, pattern: /fm音源|fm synth|pc-?88|pc-?98|98音源|pc engine|pcエンジン|\bmsx\b/i },
+  { id: 'fm-synth', weight: 0.7, pattern: /fm音源|fm synth|pc-?88|pc-?98|98音源|pc engine|pcエンジン|\bmsx\b/i },
   // ノベルゲーム
   {
     id: 'visual-novel',
-    weight: 0.65,
+    weight: 0.7,
     pattern: /visual novel|ビジュアルノベル|ノベルゲーム|ギャルゲー|galgame|エロゲ|eroge|アドベンチャーゲーム/i,
   },
   // オーケストラゲーム
   {
     id: 'game-orchestral',
-    weight: 0.6,
+    weight: 0.65,
     pattern: /ゲームオーケストラ|オーケストラゲーム|orchestral game|symphonic game|ゲーム交響曲/i,
   },
   // 有名ゲーム作品・ゲーム作曲家（メタデータに作品名が出る場合）
   {
     id: 'game-music',
-    weight: 0.6,
+    weight: 0.65,
     pattern:
       /undertale|deltarune|chrono trigger|final fantasy|dragon quest|zelda|ゼルダ|super mario|マリオ|pokemon|ポケモン|kirby|カービィ|sonic the hedgehog|ソニック|mega man|ロックマン|castlevania|悪魔城|kingdom hearts|キングダムハーツ|nier|persona|ペルソナ|monster hunter|モンハン|splatoon|スプラトゥーン|toby fox|\bzun\b|植松伸夫|光田康典|目黒将司|古代祐三|並木学|下村陽子|岡部啓一/i,
   },
   // ゲーム音楽そのもの（明示的な語）
   {
     id: 'game-music',
-    weight: 0.65,
+    weight: 0.7,
     pattern:
       /ゲーム音楽|ゲームミュージック|video game music|\bvgm\b|game music|game soundtrack|ゲームサウンドトラック|ゲームbgm|ゲームost/i,
   },

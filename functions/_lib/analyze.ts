@@ -469,7 +469,19 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     });
   }
 
-  const { primary, others } = aggregateGenres(evidence);
+  // ゲーム固有の強い手がかりは、coarse な大分類より優先して primary に昇格させる
+  const priorityGameIds = [
+    ...new Set(
+      gameDetections
+        .filter((detection) =>
+          detection.canonicalId === 'game-music'
+            ? detection.weight >= 0.6
+            : gameSubgenreIds.has(detection.canonicalId) && detection.weight >= 0.6,
+        )
+        .map((detection) => detection.canonicalId),
+    ),
+  ];
+  const { primary, others } = aggregateGenres(evidence, { priorityIds: priorityGameIds });
   const matchedCount = evidence.filter((item) => item.canonicalId).length;
   const level = confidenceLevel(primary?.confidence ?? 0, matchedCount);
 

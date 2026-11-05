@@ -35,6 +35,8 @@ export interface TrackCandidate {
   sourceId: string;
   /** ソースが申告しているジャンル（粗いラベル。判定の材料として使う） */
   rawGenre?: string;
+  /** 30秒試聴の URL（iTunes / Deezer が提供する場合）。 */
+  previewUrl?: string;
   links?: Partial<Record<SourceName, string>>;
   /** 検索スコア（高いほどクエリに近い）。 */
   score?: number;

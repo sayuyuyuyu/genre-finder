@@ -23,6 +23,8 @@ export interface DeezerTrack {
   duration?: number;
   link?: string;
   release_date?: string;
+  /** 30秒の試聴用 mp3。 */
+  preview?: string;
   artist: DeezerArtist;
   album?: DeezerAlbumRef;
 }

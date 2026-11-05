@@ -52,6 +52,14 @@ export interface AggregatedGenres {
   others: GenreScore[];
 }
 
+export interface AggregateOptions {
+  /**
+   * coarse ラベルより優先したいジャンル ID（例: ゲーム音楽の検出結果）。
+   * primary が大分類や Soundtrack のとき、ここに含まれる細分類へ昇格させる。
+   */
+  priorityIds?: string[];
+}
+
 interface Bucket {
   /** 直接の証拠の重み合計。 */
   own: number;
@@ -82,7 +90,10 @@ function ensurePrimaryTop(primary: GenreScore, scores: GenreScore[]): void {
  * confidence = (そのジャンル + 子ジャンルの支持重み) / 対応表に載った証拠の総重み。
  * 2ソース以上が同じジャンルを支持したらブーストする。
  */
-export function aggregateGenres(evidence: GenreEvidence[]): AggregatedGenres {
+export function aggregateGenres(
+  evidence: GenreEvidence[],
+  options: AggregateOptions = {},
+): AggregatedGenres {
   const buckets = new Map<string, Bucket>();
   let totalWeight = 0;
 
@@ -199,6 +210,35 @@ export function aggregateGenres(evidence: GenreEvidence[]): AggregatedGenres {
           supportSources.set(chosen.id, chosenSources);
           scores = rebuild();
         }
+        const chosenScore = scores.find((score) => score.id === chosen.id) ?? chosen;
+        ensurePrimaryTop(chosenScore, scores);
+        primary = chosenScore;
+        scores = [chosenScore, ...scores.filter((score) => score.id !== chosenScore.id)];
+      }
+    }
+  }
+
+  /* ---------- ゲーム音楽など、coarse ラベルより優先したい細分類への昇格 ---------- */
+  const priorityIds = options.priorityIds ?? [];
+  if (primary && priorityIds.length > 0) {
+    const currentPrimary = primary;
+    const primaryDef = getGenre(currentPrimary.id);
+    const needsPromotion = Boolean(primaryDef?.broad) || currentPrimary.id === 'soundtrack';
+    if (needsPromotion) {
+      const candidates = scores
+        .filter((score) => priorityIds.includes(score.id) && score.id !== currentPrimary.id)
+        .sort((a, b) => b.confidence - a.confidence);
+      const chosen = candidates[0];
+      if (chosen) {
+        // coarse ラベルの重みの半分を優先ジャンルへ移し、表示の矛盾を防ぐ
+        const primaryOwn = buckets.get(currentPrimary.id)?.own ?? 0;
+        const transfer = primaryOwn * BROAD_TRANSFER_RATIO;
+        support.set(chosen.id, (support.get(chosen.id) ?? 0) + transfer);
+        support.set(currentPrimary.id, Math.max(0, primaryOwn - transfer));
+        const chosenSources = supportSources.get(chosen.id) ?? new Set<SourceName>();
+        for (const source of buckets.get(currentPrimary.id)?.sources ?? []) chosenSources.add(source);
+        supportSources.set(chosen.id, chosenSources);
+        scores = rebuild();
         const chosenScore = scores.find((score) => score.id === chosen.id) ?? chosen;
         ensurePrimaryTop(chosenScore, scores);
         primary = chosenScore;

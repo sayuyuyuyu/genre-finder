@@ -1,9 +1,11 @@
 import type { GenreJudgment } from '@shared/types';
 import DataFeed from '@/components/DataFeed';
 import { FineTags, RelatedGenres } from '@/components/GenreChips';
+import PreviewButton from '@/components/PreviewButton';
 import Spectrum from '@/components/Spectrum';
 import TrackArtwork from '@/components/TrackArtwork';
 import Verdict from '@/components/Verdict';
+import { usePreview } from '@/hooks/usePreview';
 import { externalSearchLinks, trackMeta } from '@/lib/format';
 
 interface JudgmentViewProps {
@@ -26,6 +28,7 @@ export default function JudgmentView({
   const genreInfo = judgment.genreInfo;
   const meta = trackMeta(track);
   const links = externalSearchLinks(track);
+  const preview = usePreview(track.previewUrl);
   const failed = failedSources.length > 0;
 
   return (
@@ -54,6 +57,7 @@ export default function JudgmentView({
             <h2 className="judgment__track-title">{track.title}</h2>
             <p className="judgment__artist">{track.artist}</p>
             {meta && <p className="judgment__meta">{meta}</p>}
+            <PreviewButton preview={preview} />
             <div className="ext-links" aria-label="外部サービスで開く">
               {links.map((link) => (
                 <a
