@@ -154,7 +154,14 @@ async function gatherMusicBrainz(title: string, artist?: string): Promise<MusicB
   const artistInfo = match.artistId
     ? await mbArtistGenres(match.artistId)
     : { genres: [], tags: [] };
-  const recordingInfo = await mbRecordingTags(match.recordingId);
+
+  // MusicBrainz は 1 req/sec 制限があるため、アーティストのジャンルが十分に取れているときは
+  // レコーディングのタグ取得を省略する（応答が 1〜1.2 秒短くなる）。
+  const artistGenreVotes = artistInfo.genres.reduce((sum, tag) => sum + tag.count, 0);
+  const needsRecordingInfo = artistInfo.genres.length < 3 || artistGenreVotes < 20;
+  const recordingInfo = needsRecordingInfo
+    ? await mbRecordingTags(match.recordingId)
+    : { genres: [], tags: [] };
   return {
     match,
     artistGenres: artistInfo.genres,
