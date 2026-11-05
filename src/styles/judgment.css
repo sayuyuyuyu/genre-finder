@@ -94,9 +94,10 @@
 
 .ext-link {
   display: inline-flex;
+  min-height: 24px;
   align-items: center;
   gap: 5px;
-  padding-bottom: 2px;
+  padding: 3px 0;
   border-bottom: 1px solid var(--line-strong);
   color: var(--cream-64);
   font-family: var(--font-mono);
@@ -674,6 +675,7 @@
 
 .verdict__work-link {
   display: inline-flex;
+  min-height: 24px;
   align-items: center;
   gap: 6px;
   color: var(--amber);

@@ -100,6 +100,7 @@ async function contrastViolations(page) {
 
     const out = [];
     for (const el of document.querySelectorAll('.judgment *')) {
+      if (el.closest('[aria-hidden="true"]')) continue;
       const text = (el.textContent || '').trim();
       if (!text || el.children.length > 0) continue;
       const cs = getComputedStyle(el);
@@ -114,6 +115,28 @@ async function contrastViolations(page) {
       const large = size >= 18.66 || (size >= 14 && parseFloat(cs.fontWeight) >= 700);
       const min = large ? 3 : 4.5;
       if (cr < min) out.push({ text: text.slice(0, 20), cls: String(el.className || el.tagName), cr: Math.round(cr * 100) / 100 });
+    }
+    return out;
+  });
+}
+
+/** タップ領域が 24x24 未満の操作要素を返す（WCAG 2.2 AA）。 */
+async function tapTargetViolations(page) {
+  return page.evaluate(() => {
+    const out = [];
+    for (const el of document.querySelectorAll('button, a[href]')) {
+      if (el.closest('[aria-hidden="true"]')) continue;
+      if (el.classList.contains('skip-link')) continue;
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      if (rect.width < 24 || rect.height < 24) {
+        out.push({
+          text: (el.textContent || '').trim().slice(0, 18),
+          cls: String(el.className || el.tagName),
+          w: Math.round(rect.width),
+          h: Math.round(rect.height),
+        });
+      }
     }
     return out;
   });
@@ -199,6 +222,18 @@ async function run() {
     await page.screenshot({ path: join(artifacts, '02-results.png'), fullPage: true });
     check('results: 候補が出る', resultCount > 0, `${resultCount} 件`);
     check('results: 先頭が強調される', (await page.locator('.badge').count()) === 1);
+    const resultsContrast = await contrastViolations(page);
+    check(
+      'a11y: 検索結果のコントラスト（WCAG AA）',
+      resultsContrast.length === 0,
+      resultsContrast.slice(0, 3).map((v) => `${v.cr} .${v.cls}`).join(' / '),
+    );
+    const resultsTaps = await tapTargetViolations(page);
+    check(
+      'a11y: 検索結果のタップ領域（24px）',
+      resultsTaps.length === 0,
+      JSON.stringify(resultsTaps.slice(0, 3)),
+    );
     if (mode === 'mock') {
       const before = await page.locator('button.track').count();
       await page.getByRole('button', { name: /COVERS ON/ }).click();
@@ -265,6 +300,9 @@ async function run() {
       lampCount >= 3 && agreeCount >= 1,
       `${agreeCount}/${lampCount} が一致`,
     );
+
+    const taps = await tapTargetViolations(page);
+    check('a11y: 判定画面のタップ領域（24px）', taps.length === 0, JSON.stringify(taps.slice(0, 3)));
 
     const contrast = await contrastViolations(page);
     check(
