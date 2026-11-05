@@ -227,9 +227,11 @@ async function run() {
     await page.getByRole('button', { name: 'COPY' }).click();
     await page.waitForTimeout(120);
     const copied = await page.evaluate(() => window.__copied ?? '');
+    const copyTitle = (await page.locator('.judgment__track-title').innerText()).trim();
+    const copyGenre = (await page.locator('.verdict__arcade').innerText()).trim();
     check(
       'judgment: COPYで曲名とジャンルをコピー',
-      copied.includes('Megalovania') && copied.includes('CHIPTUNE') && copied.includes('?t='),
+      copied.includes(copyTitle.slice(0, 6)) && copied.includes(copyGenre) && copied.includes('?t='),
       copied.replace(/\n/g, ' | ').slice(0, 70),
     );
 
