@@ -15,6 +15,7 @@ export async function onRequest(context: PagesContext): Promise<Response> {
   const artist = url.searchParams.get('artist')?.trim() || undefined;
   const itunesId = url.searchParams.get('itunesId')?.trim() || undefined;
   const deezerId = url.searchParams.get('deezerId')?.trim() || undefined;
+  const genreHint = url.searchParams.get('genreHint')?.trim() || undefined;
 
   if (!title) {
     return errorResponse('曲名を指定してください。', 400);
@@ -22,11 +23,11 @@ export async function onRequest(context: PagesContext): Promise<Response> {
 
   const startedAt = Date.now();
   try {
-    const cacheKey = `analyze:${title}|${artist ?? ''}|${itunesId ?? ''}|${deezerId ?? ''}`;
+    const cacheKey = `analyze:${title}|${artist ?? ''}|${itunesId ?? ''}|${deezerId ?? ''}|${genreHint ?? ''}`;
     const outcome = await cached(
       cacheKey,
       ANALYZE_TTL,
-      () => analyzeTrack({ title, artist, itunesId, deezerId }, context.env),
+      () => analyzeTrack({ title, artist, itunesId, deezerId, genreHint }, context.env),
       // 一部ソースが落ちた判定はキャッシュせず、次のアクセスで取り直す
       { shouldCache: (value) => value.judgment.failedSources.length === 0 },
     );

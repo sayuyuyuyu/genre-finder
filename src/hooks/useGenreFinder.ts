@@ -160,7 +160,11 @@ export function useGenreFinder() {
     setSelectedTrack(track);
     setWarnings([]);
 
-    const params: AnalyzeParams = { title: track.title, artist: track.artist || undefined };
+    const params: AnalyzeParams = {
+      title: track.title,
+      artist: track.artist || undefined,
+      genreHint: track.rawGenre || undefined,
+    };
     if (track.source === 'itunes') params.itunesId = track.sourceId;
     if (track.source === 'deezer') params.deezerId = track.sourceId;
 

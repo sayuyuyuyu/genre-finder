@@ -83,6 +83,8 @@ export interface AnalyzeParams {
   artist?: string;
   itunesId?: string;
   deezerId?: string;
+  /** 検索結果のジャンル。iTunes が混雑しているときの補完用。 */
+  genreHint?: string;
 }
 
 function queryString(params: Record<string, string | undefined>): string {
@@ -120,6 +122,7 @@ export async function fetchAnalyze(
       artist: params.artist,
       itunesId: params.itunesId,
       deezerId: params.deezerId,
+      genreHint: params.genreHint,
     })}`,
     signal,
   );

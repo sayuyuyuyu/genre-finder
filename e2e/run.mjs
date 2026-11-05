@@ -140,6 +140,10 @@ async function run() {
         },
       });
     });
+    const analyzeUrls = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/api/analyze')) analyzeUrls.push(request.url());
+    });
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('console', (message) => {
       if (message.type() === 'error') errors.push(message.text());
@@ -246,6 +250,12 @@ async function run() {
       'judgment: RELATEDを押すと一行コメントが出る',
       relatedNote.length > 0 && (await page.locator('.related-note').count()) === 0,
       relatedNote.slice(0, 40),
+    );
+
+    check(
+      'judgment: 検索結果のジャンルをヒントとして送る',
+      analyzeUrls.some((url) => url.includes('genreHint=')),
+      analyzeUrls[0] ?? '',
     );
 
     const lampCount = await page.locator('.lamp').count();

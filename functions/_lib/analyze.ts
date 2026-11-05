@@ -35,11 +35,16 @@ import { cached } from './cache';
 import { deezerToCandidate, itunesToCandidate } from './candidates';
 import { detectGameMusic, detectGameWork, type GameDetectionField } from './game-detect';
 
+/** 検索結果のジャンルで補完したときの note。 */
+const HINT_NOTE = '検索結果のジャンル情報から補完';
+
 export interface AnalyzeInput {
   title: string;
   artist?: string;
   itunesId?: string;
   deezerId?: string;
+  /** 検索結果が持っていたジャンル（iTunes がレート制限のときの補完に使う）。 */
+  genreHint?: string;
 }
 
 export interface AnalyzeOutcome {
@@ -372,6 +377,9 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     evidence.push(
       toEvidence('itunes', itunes.track.primaryGenreName, ITUNES_WEIGHT, 'iTunes の公式ジャンル分類'),
     );
+  } else if (input.genreHint) {
+    // iTunes が 429 などで落ちても、検索結果が持っていたジャンルで補完する
+    evidence.push(toEvidence('itunes', input.genreHint, 0.6, HINT_NOTE));
   }
   // Deezer は 1 アルバムに複数ジャンルを返すことがあるため、合計が 0.75 になるよう分割する
   const deezerGenres = deezer?.genres ?? [];
@@ -491,6 +499,11 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     ),
   ];
   const { primary, others } = aggregateGenres(evidence, { priorityIds: priorityGameIds });
+  // 検索結果のジャンルだけが根拠のときは参考程度に留める（自信ありげに見せない）
+  const onlyHintEvidence = evidence.length === 1 && evidence[0]?.note === HINT_NOTE;
+  if (primary && onlyHintEvidence) {
+    primary.confidence = Math.min(primary.confidence, 0.45);
+  }
   // ゲーム音楽と判定した曲だけ作品名を出す（それ以外はキー自体を出さない）
   const gameWorkIds = new Set([...gameSubgenreIds, 'game-music']);
   const isGameJudgment =
@@ -550,6 +563,9 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     mb,
     failedSources,
   });
+  if (onlyHintEvidence) {
+    caveats.push('iTunes が混雑していたため、検索結果のジャンルだけで判定しています。');
+  }
 
   const primaryGenre = primary ? getGenre(primary.id) : undefined;
   const genreInfo =

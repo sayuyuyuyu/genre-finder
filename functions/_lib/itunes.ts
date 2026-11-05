@@ -3,6 +3,7 @@
  * https://itunes.apple.com/search と /lookup を使う。
  */
 
+import { cached } from './cache';
 import { fetchJson } from './http';
 
 export interface ItunesTrack {
@@ -58,7 +59,14 @@ export async function itunesSearch(
   return (data.results ?? []).filter(isSong);
 }
 
+const LOOKUP_TTL = 86_400;
+
 export async function itunesLookup(id: string | number): Promise<ItunesTrack | null> {
+  // 同じ曲を何度も調べても iTunes を叩かない（レート制限対策）
+  return cached(`itunes-lookup:${id}`, LOOKUP_TTL, () => fetchItunesLookup(id));
+}
+
+async function fetchItunesLookup(id: string | number): Promise<ItunesTrack | null> {
   const params = new URLSearchParams({ id: String(id), entity: 'song' });
   const data = await fetchJson<ItunesSearchResponse>(`${ITUNES_BASE}/lookup?${params.toString()}`);
   const results = (data.results ?? []).filter(isSong);
