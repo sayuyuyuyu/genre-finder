@@ -24,6 +24,8 @@
 
 ゲーム音楽と判定できた曲は、ジャンル名の下に `WORK / UNDERTALE` のような作品名も出ます（CHIPTUNE / FM SYNTH / RHYTHM GAME / TOUHOU / VISUAL NOVEL など）。東方アレンジはサークル名（SOUND HOLIC / IOSYS 等）やイベント名（例大祭 等）、音ゲーは BEMANI / SOUND VOLTEX / プロセカ などの語からも検出します。
 
+URLを共有するとOGPカードが表示され、スマホのホーム画面にも追加できます（manifest）。
+
 判定画面では **30秒試聴**（iTunes / Deezer のプレビュー音源）ができ、ゲーム作品名は Apple Music の検索にリンクします。調べた曲は **RECENT** としてトップページに残り、**RANDOM** でおまかせ選曲もできます。判定結果の URL は `?t=曲名&a=アーティスト` の形になるので、そのまま共有すると開いた人にも同じ判定が出ます。
 
 ## 使い方

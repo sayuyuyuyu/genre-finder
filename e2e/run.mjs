@@ -142,6 +142,27 @@ async function run() {
     await page.screenshot({ path: join(artifacts, '01-idle.png'), fullPage: true });
     check('idle: 検索入力がある', await page.locator('input').first().isVisible());
 
+    // メタ情報（共有カード・ホーム画面追加用）
+    const meta = await page.evaluate(() => ({
+      manifest: Boolean(document.querySelector('link[rel="manifest"]')),
+      appleIcon: Boolean(document.querySelector('link[rel="apple-touch-icon"]')),
+      ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? '',
+    }));
+    check('meta: manifest がある', meta.manifest);
+    check('meta: apple-touch-icon がある', meta.appleIcon);
+    check('meta: og:image が設定されている', meta.ogImage.endsWith('/og.png'), meta.ogImage);
+    const assets = await page.evaluate(async () => {
+      const urls = ['/manifest.webmanifest', '/og.png', '/icon-192.png', '/apple-touch-icon.png'];
+      const result = {};
+      for (const url of urls) result[url] = (await fetch(url)).status;
+      return result;
+    });
+    check(
+      'meta: アイコン/OGPが配信されている',
+      Object.values(assets).every((status) => status === 200),
+      JSON.stringify(assets),
+    );
+
     // 検索 → 結果
     await page.locator('input[type="search"], input[type="text"]').first().fill('夜に駆ける YOASOBI');
     await page.keyboard.press('Enter');

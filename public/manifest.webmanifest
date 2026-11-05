@@ -1,0 +1,13 @@
+{
+  "name": "これ何ジャンル？",
+  "short_name": "何ジャンル？",
+  "description": "曲名・音声ファイル・Spotify/YouTubeリンクから音楽ジャンルを判定するアプリ",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12100e",
+  "theme_color": "#12100e",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
