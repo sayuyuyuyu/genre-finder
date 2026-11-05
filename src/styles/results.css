@@ -373,11 +373,3 @@
   border-color: var(--line-amber);
   color: var(--amber);
 }
-
-.track__versions {
-  color: var(--amber);
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}

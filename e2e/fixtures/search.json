@@ -21,27 +21,15 @@
       "score": 1
     },
     {
-      "id": "itunes:999000111",
-      "title": "Megalovania (Live)",
-      "artist": "Toby Fox",
-      "album": "Undertale Live",
-      "year": 2015,
-      "durationMs": 156000,
-      "source": "itunes",
-      "sourceId": "999000111",
-      "score": 0.9,
-      "isCover": false
-    },
-    {
-      "id": "deezer:880000002",
+      "id": "deezer:880000001",
       "title": "Megalovania (Piano Cover)",
-      "artist": "Piano Dreams",
-      "album": "Piano Covers",
+      "artist": "Toby Fox",
+      "album": "UNDERTALE Soundtrack",
       "year": 2015,
       "durationMs": 156000,
       "source": "deezer",
-      "sourceId": "880000002",
-      "score": 0.7,
+      "sourceId": "880000001",
+      "score": 0.8,
       "isCover": true
     }
   ],
