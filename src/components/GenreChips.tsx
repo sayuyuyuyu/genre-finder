@@ -10,7 +10,7 @@ export function FineTags({ tags }: FineTagsProps) {
   return (
     <section className="notes-block" aria-labelledby="fine-tags-label">
       <p id="fine-tags-label" className="micro">
-        FINE TAGS / 細分類タグ
+        TAGS
       </p>
       <ul className="chips">
         {tags.map((tag) => (
@@ -29,7 +29,7 @@ export function FineTags({ tags }: FineTagsProps) {
 }
 
 interface RelatedGenresProps {
-  related: Array<{ id: string; labelJa: string }>;
+  related: Array<{ id: string; labelJa: string; arcade?: string }>;
 }
 
 export function RelatedGenres({ related }: RelatedGenresProps) {
@@ -37,12 +37,12 @@ export function RelatedGenres({ related }: RelatedGenresProps) {
   return (
     <section className="notes-block" aria-labelledby="related-label">
       <p id="related-label" className="micro">
-        RELATED / 関連ジャンル
+        RELATED
       </p>
       <ul className="chips">
         {related.map((genre) => (
-          <li className="chip chip--related" key={genre.id}>
-            {genre.labelJa}
+          <li className="chip chip--related" key={genre.id} title={genre.labelJa}>
+            {genre.arcade ?? genre.labelJa}
           </li>
         ))}
       </ul>

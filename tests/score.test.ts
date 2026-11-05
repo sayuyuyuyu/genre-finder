@@ -127,6 +127,17 @@ describe('aggregateGenres', () => {
     expect(result.primary?.confidence).toBeGreaterThan(BROAD_CONFIDENCE_CAP);
   });
 
+  it('GenreScore に arcade ラベルが入る（others も）', () => {
+    const result = aggregateGenres([
+      evidence('itunes', 'Pop', ITUNES_WEIGHT),
+      evidence('deezer', 'Rock', DEEZER_WEIGHT),
+    ]);
+    expect(result.primary?.arcade).toBe('DANCE POP');
+    for (const score of result.others) {
+      expect(score.arcade, score.id).toBeTruthy();
+    }
+  });
+
   it('証拠が無ければ primary は null', () => {
     const result = aggregateGenres([]);
     expect(result.primary).toBeNull();

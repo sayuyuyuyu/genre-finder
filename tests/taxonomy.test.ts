@@ -11,9 +11,54 @@ import {
 import { normalize } from '../shared/genre/normalize';
 
 describe('taxonomy', () => {
-  it('ジャンル数は SPEC の 55〜70 の範囲', () => {
+  it('ジャンル数は SPEC の 55〜100 の範囲', () => {
     expect(GENRES.length).toBeGreaterThanOrEqual(55);
-    expect(GENRES.length).toBeLessThanOrEqual(70);
+    expect(GENRES.length).toBeLessThanOrEqual(100);
+  });
+
+  it('全ジャンルに IIDX 風 arcade ラベルがある（非空・全大文字・5〜18文字）', () => {
+    for (const genre of GENRES) {
+      expect(genre.arcade, genre.id).toBeTruthy();
+      const arcade = genre.arcade ?? '';
+      expect(arcade, genre.id).toMatch(/^[A-Z0-9 '&./-]+$/);
+      expect(arcade.length, genre.id).toBeGreaterThanOrEqual(5);
+      expect(arcade.length, genre.id).toBeLessThanOrEqual(18);
+    }
+  });
+
+  it('arcade ラベルは重複しない', () => {
+    const labels = GENRES.map((genre) => genre.arcade);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  it('主要ジャンルに tagline がある（40文字以内）', () => {
+    const withTagline = GENRES.filter((genre) => genre.tagline);
+    expect(withTagline.length).toBeGreaterThanOrEqual(30);
+    for (const genre of withTagline) {
+      expect(genre.tagline?.length ?? 0, genre.id).toBeLessThanOrEqual(40);
+    }
+  });
+
+  it('ゲームミュージック family とサブジャンルが揃っている', () => {
+    const gameIds = [
+      'game-music',
+      'chiptune',
+      'fm-synth',
+      'game-orchestral',
+      'rhythm-game',
+      'touhou-arrange',
+      'visual-novel',
+    ];
+    for (const id of gameIds) {
+      const genre = GENRE_BY_ID.get(id);
+      expect(genre, id).toBeDefined();
+      expect(genre?.family, id).toBe('ゲームミュージック');
+    }
+    expect(GENRE_BY_ID.get('game-music')?.broad).toBe(true);
+    for (const id of gameIds.slice(1)) {
+      expect(parentOf(id), id).toBe('game-music');
+    }
+    expect(FAMILIES).toContain('ゲームミュージック');
   });
 
   it('id が重複しない', () => {

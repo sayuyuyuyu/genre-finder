@@ -32,6 +32,7 @@ import { itunesLookup, itunesSearch, type ItunesTrack } from './itunes';
 import { lastfmTopTags } from './lastfm';
 import { mbArtistGenres, mbRecordingTags, mbSearchRecording, type MbRecordingMatch, type MbTag } from './musicbrainz';
 import { deezerToCandidate, itunesToCandidate } from './candidates';
+import { detectGameMusic, type GameDetectionField } from './game-detect';
 
 export interface AnalyzeInput {
   title: string;
@@ -246,6 +247,20 @@ function buildExplanation(primary: GenreScore | null, level: ConfidenceLevel): s
     (group) =>
       `${group.sources.join(' と ')} は${group.labels.map((label) => `「${label}」`).join('')}`,
   );
+  // ゲーム音楽の検出だけが根拠のときは「手がかり」ベースの文にする
+  const detectionNotes = primary.evidence
+    .map((item) => item.note)
+    .filter((note): note is string => Boolean(note && note.includes('に「')));
+  if (detectionNotes.length === primary.evidence.length && detectionNotes.length > 0) {
+    const clues = [...new Set(detectionNotes)];
+    const label =
+      primary.family.includes(primary.labelJa)
+        ? primary.labelJa
+        : `${primary.labelJa}（${primary.family}）`;
+    const percent = Math.round(primary.confidence * 100);
+    return `検出した手がかり（${clues.join('、')}）から、${label}と判断しました（一致度 ${percent}%）。`;
+  }
+
   const basis = `${clauses.join('、')}と分類しています。`;
   // 「R&B（R&B・ソウル）」のような重複表記を避ける
   const label = primary.family.includes(primary.labelJa)
@@ -391,6 +406,69 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     );
   }
 
+  /* ------------------- ゲーム音楽らしさの検出（曲名・アルバム名・タグ） ------------------- */
+  const trackSource: SourceName =
+    input.deezerId && deezer?.track
+      ? 'deezer'
+      : itunes?.track
+        ? 'itunes'
+        : deezer?.track
+          ? 'deezer'
+          : 'itunes';
+  const detectionFields: GameDetectionField[] = [
+    { label: '曲名', text: title, source: trackSource, scale: 1 },
+    { label: 'アーティスト名', text: artist, source: trackSource, scale: 0.9 },
+    { label: 'アルバム名', text: itunes?.track?.collectionName, source: 'itunes', scale: 1 },
+    {
+      label: 'アルバム名',
+      text: deezer?.album?.title ?? deezer?.track?.album?.title,
+      source: 'deezer',
+      scale: 1,
+    },
+    { label: 'iTunesのジャンル', text: itunes?.track?.primaryGenreName, source: 'itunes', scale: 1 },
+  ];
+  for (const tag of mb?.artistTags ?? []) {
+    detectionFields.push({ label: 'MusicBrainzのタグ', text: tag.name, source: 'musicbrainz', scale: 0.9 });
+  }
+  for (const tag of mb?.recordingTags ?? []) {
+    detectionFields.push({ label: 'MusicBrainzのタグ', text: tag.name, source: 'musicbrainz', scale: 0.9 });
+  }
+  for (const tag of lastfmTags) {
+    detectionFields.push({ label: 'Last.fmのタグ', text: tag.name, source: 'lastfm', scale: 0.9 });
+  }
+  const gameDetections = detectGameMusic(detectionFields);
+  for (const detection of gameDetections) {
+    evidence.push({
+      source: detection.source,
+      raw: getGenre(detection.canonicalId)?.labelEn ?? detection.raw,
+      canonicalId: detection.canonicalId,
+      weight: detection.weight,
+      note: detection.note,
+    });
+  }
+  // 細分類（チップチューン・東方など）だけ検出された場合も、ゲーム音楽の傘を薄く足す
+  const gameSubgenreIds = new Set([
+    'chiptune',
+    'fm-synth',
+    'game-orchestral',
+    'rhythm-game',
+    'touhou-arrange',
+    'visual-novel',
+  ]);
+  const hasGameUmbrella = gameDetections.some((detection) => detection.canonicalId === 'game-music');
+  const strongestSubgenre = gameDetections.find((detection) =>
+    gameSubgenreIds.has(detection.canonicalId),
+  );
+  if (!hasGameUmbrella && strongestSubgenre) {
+    evidence.push({
+      source: strongestSubgenre.source,
+      raw: getGenre('game-music')?.labelEn ?? 'Game Music',
+      canonicalId: 'game-music',
+      weight: 0.5,
+      note: 'ゲーム音楽の細分類から推定',
+    });
+  }
+
   const { primary, others } = aggregateGenres(evidence);
   const matchedCount = evidence.filter((item) => item.canonicalId).length;
   const level = confidenceLevel(primary?.confidence ?? 0, matchedCount);
@@ -409,6 +487,12 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
   for (const tag of mb?.artistGenres ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
   for (const tag of mb?.recordingGenres ?? []) addFineTag(tag.name, tag.count, 'musicbrainz');
   for (const tag of lastfmTags) addFineTag(tag.name, tag.count, 'lastfm');
+  // ゲーム音楽の検出語も細分類タグとして見せる（既に同じ表記があれば増やさない）
+  for (const detection of gameDetections) {
+    const key = normalizeText(detection.raw);
+    if (!key || fineTagMap.has(key)) continue;
+    fineTagMap.set(key, { name: detection.raw, count: 1, source: detection.source });
+  }
 
   const fineTags = [...fineTagMap.values()]
     .sort((a, b) => b.count - a.count)
@@ -439,12 +523,15 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     failedSources,
   });
 
-  const genreInfo = primary
-    ? {
-        description: getGenre(primary.id)?.description ?? '',
-        related: relatedGenres(primary.id),
-      }
-    : undefined;
+  const primaryGenre = primary ? getGenre(primary.id) : undefined;
+  const genreInfo =
+    primary && primaryGenre
+      ? {
+          description: primaryGenre.description,
+          tagline: primaryGenre.tagline ?? `${primaryGenre.labelJa}。${primaryGenre.family}の音。`,
+          related: relatedGenres(primary.id),
+        }
+      : undefined;
 
   const judgment: GenreJudgment = {
     track,

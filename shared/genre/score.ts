@@ -138,6 +138,7 @@ export function aggregateGenres(evidence: GenreEvidence[]): AggregatedGenres {
       id,
       labelJa: genre.labelJa,
       labelEn: genre.labelEn,
+      arcade: genre.arcade ?? genre.labelEn.toUpperCase(),
       family: genre.family,
       confidence: round3(boosted),
       evidence: [...bucket.evidence].sort((a, b) => b.weight - a.weight),

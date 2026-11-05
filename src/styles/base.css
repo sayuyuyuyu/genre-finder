@@ -34,6 +34,8 @@
   --font-body: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', system-ui,
     -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --font-arcade: 'Helvetica Neue', 'HelveticaNeue', 'Arial Narrow', 'Hiragino Sans',
+    'Noto Sans JP', system-ui, sans-serif;
 
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --radius-s: 4px;

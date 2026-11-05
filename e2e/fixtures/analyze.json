@@ -1,0 +1,57 @@
+{
+  "judgment": {
+    "track": {
+      "id": "itunes:1490256995",
+      "title": "夜に駆ける",
+      "artist": "YOASOBI",
+      "album": "夜に駆ける - Single",
+      "year": 2019,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/fe/58/79/fe58795c-1628-230a-9ffe-300c04b6627c/194491717186.jpg/600x600bb.jpg",
+      "durationMs": 261013,
+      "source": "itunes",
+      "sourceId": "1490256995",
+      "rawGenre": "J-Pop",
+      "links": { "itunes": "https://music.apple.com/jp/album/1490256978?i=1490256995" }
+    },
+    "primary": {
+      "id": "j-pop",
+      "labelJa": "J-POP",
+      "labelEn": "J-Pop",
+      "arcade": "J-POP",
+      "family": "ポップス",
+      "confidence": 0.703,
+      "evidence": []
+    },
+    "others": [
+      { "id": "pop", "labelJa": "ポップス", "labelEn": "Pop", "arcade": "DANCE POP", "family": "ポップス", "confidence": 0.57, "evidence": [] },
+      { "id": "anime", "labelJa": "アニソン", "labelEn": "Anime", "arcade": "ANIME", "family": "アニソン・ボカロ", "confidence": 0.21, "evidence": [] },
+      { "id": "city-pop", "labelJa": "シティポップ", "labelEn": "City Pop", "arcade": "CITY POP", "family": "ポップス", "confidence": 0.08, "evidence": [] }
+    ],
+    "fineTags": [
+      { "name": "yakousei", "count": 2, "source": "musicbrainz" },
+      { "name": "japanese pop", "count": 5, "source": "musicbrainz" }
+    ],
+    "evidence": [
+      { "source": "itunes", "raw": "J-Pop", "canonicalId": "j-pop", "weight": 0.9, "note": "iTunes の公式ジャンル分類" },
+      { "source": "deezer", "raw": "ポップス", "canonicalId": "pop", "weight": 0.75, "note": "Deezer のアルバムジャンル" },
+      { "source": "musicbrainz", "raw": "j-pop", "canonicalId": "j-pop", "weight": 0.648, "note": "MusicBrainz のアーティストジャンル（投票数 9）" },
+      { "source": "musicbrainz", "raw": "yakousei", "canonicalId": null, "weight": 0.49, "note": "MusicBrainz のアーティストジャンル（投票数 2）" }
+    ],
+    "sourcesUsed": ["itunes", "deezer", "musicbrainz"],
+    "failedSources": [],
+    "confidence": "high",
+    "explanation": "iTunes / Apple Music と MusicBrainz は「J-Pop」と分類しています。総合してJ-POPと判断しました（一致度 70%）。",
+    "caveats": ["iTunes は「J-Pop」としか分類していません。"],
+    "genreInfo": {
+      "description": "日本で制作されたポップス。",
+      "tagline": "イントロで分かるやつ。",
+      "related": [
+        { "id": "anime", "labelJa": "アニソン", "arcade": "ANIME" },
+        { "id": "city-pop", "labelJa": "シティポップ", "arcade": "CITY POP" },
+        { "id": "rock", "labelJa": "ロック", "arcade": "ROCK" }
+      ]
+    }
+  },
+  "warnings": [],
+  "elapsedMs": 1200
+}

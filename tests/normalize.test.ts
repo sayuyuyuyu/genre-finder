@@ -51,6 +51,21 @@ describe('normalize（ジャンルラベル → タクソノミーID）', () => 
     expect(normalize('house music')?.id).toBe('house');
   });
 
+  it('ゲーム音楽系のラベルを解決する', () => {
+    expect(normalize('Chiptune')?.id).toBe('chiptune');
+    expect(normalize('ファミコン')?.id).toBe('chiptune');
+    expect(normalize('8bit')?.id).toBe('chiptune');
+    expect(normalize('FM音源')?.id).toBe('fm-synth');
+    expect(normalize('PC-98')?.id).toBe('fm-synth');
+    expect(normalize('東方Project')?.id).toBe('touhou-arrange');
+    expect(normalize('BMS')?.id).toBe('rhythm-game');
+    expect(normalize('beatmania IIDX')?.id).toBe('rhythm-game');
+    expect(normalize('ノベルゲーム')?.id).toBe('visual-novel');
+    expect(normalize('ゲーム音楽')?.id).toBe('game-music');
+    expect(normalize('Video Game Music')?.id).toBe('game-music');
+    expect(normalize('BGM')?.id).toBe('game-music');
+  });
+
   it('対応表に無いタグは null', () => {
     expect(normalize('seen live')).toBeNull();
     expect(normalize('favorite')).toBeNull();

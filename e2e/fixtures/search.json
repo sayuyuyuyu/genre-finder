@@ -1,0 +1,32 @@
+{
+  "query": { "title": "夜に駆ける YOASOBI" },
+  "tracks": [
+    {
+      "id": "itunes:1490256995",
+      "title": "夜に駆ける",
+      "artist": "YOASOBI",
+      "album": "夜に駆ける - Single",
+      "year": 2019,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/fe/58/79/fe58795c-1628-230a-9ffe-300c04b6627c/194491717186.jpg/600x600bb.jpg",
+      "durationMs": 261013,
+      "source": "itunes",
+      "sourceId": "1490256995",
+      "rawGenre": "J-Pop",
+      "links": { "itunes": "https://music.apple.com/jp/album/1490256978?i=1490256995" },
+      "score": 1
+    },
+    {
+      "id": "deezer:824731152",
+      "title": "夜に駆ける",
+      "artist": "YOASOBI",
+      "album": "THE BOOK",
+      "year": 2021,
+      "artworkUrl": "https://cdn-images.dzcdn.net/images/cover/8d1a1c8b4a0b4c1d5f6e7a8b9c0d1e2f/250x250-000000-80-0-0.jpg",
+      "durationMs": 261000,
+      "source": "deezer",
+      "sourceId": "824731152",
+      "score": 0.82
+    }
+  ],
+  "warnings": []
+}

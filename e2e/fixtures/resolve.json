@@ -1,0 +1,20 @@
+{
+  "platform": "spotify",
+  "title": "Never Gonna Give You Up",
+  "artist": "Rick Astley",
+  "tracks": [
+    {
+      "id": "itunes:278319234",
+      "title": "Never Gonna Give You Up",
+      "artist": "Rick Astley",
+      "album": "Whenever You Need Somebody",
+      "year": 1987,
+      "artworkUrl": "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/2b/1a/24/2b1a24b1d1b8/886443919266.jpg/600x600bb.jpg",
+      "source": "itunes",
+      "sourceId": "278319234",
+      "rawGenre": "Pop",
+      "score": 1
+    }
+  ],
+  "warnings": []
+}

@@ -58,6 +58,11 @@ export interface GenreScore {
   id: string;
   labelJa: string;
   labelEn: string;
+  /**
+   * IIDX 風の全大文字ジャンル表記（例: "HYPER TECHNO", "DRUM'N'BASS"）。
+   * 判定画面ではこの文字列を主役として表示する。
+   */
+  arcade?: string;
   /** 大分類（例: "エレクトロニック"） */
   family: string;
   /** 0-1。全証拠のうちこのジャンルを支持する割合を重み付きで計算したもの。 */
@@ -92,7 +97,9 @@ export interface GenreJudgment {
   /** ジャンルの代表曲・関連ジャンルなど、UI の補助情報。 */
   genreInfo?: {
     description: string;
-    related: Array<{ id: string; labelJa: string }>;
+    /** IIDX のジャンル説明のような、短くて遊びのある一行（任意）。 */
+    tagline?: string;
+    related: Array<{ id: string; labelJa: string; arcade?: string }>;
   };
 }
 
