@@ -210,3 +210,16 @@ describe('confidenceLevel', () => {
     expect(confidenceLevel(0, 0)).toBe('unknown');
   });
 });
+
+describe('電子系の傘（ダンス⇄エレクトロニック）の昇格', () => {
+  it('Dance の coarse ラベルより hardstyle のタグを primary にする', () => {
+    const result = aggregateGenres([
+      { source: 'itunes', raw: 'Dance', canonicalId: 'dance', weight: 0.9 },
+      { source: 'deezer', raw: 'Dance', canonicalId: 'dance', weight: 0.75 },
+      { source: 'musicbrainz', raw: 'hardstyle', canonicalId: 'hardstyle', weight: 0.516 },
+      { source: 'musicbrainz', raw: 'electronic', canonicalId: 'electronic', weight: 0.472 },
+    ]);
+    expect(result.primary?.id).toBe('hardstyle');
+    expect(result.scores[0]?.id).toBe('hardstyle');
+  });
+});

@@ -16,8 +16,16 @@ export const DEEZER_WEIGHT = 0.75;
 
 /** 子ジャンルの支持重みを親へ回す比率。 */
 export const CHILD_ROLLUP_RATIO = 0.6;
+/** エレクトロニックとダンスは同じ傘として扱う（クラブ系の細分類を行き来させる）。 */
+const ELECTRONIC_UMBRELLA = new Set(['エレクトロニック', 'ダンス']);
+
+function sharesUmbrella(a: string, b: string): boolean {
+  if (a === b) return true;
+  return ELECTRONIC_UMBRELLA.has(a) && ELECTRONIC_UMBRELLA.has(b);
+}
+
 /** broad から細分類への昇格条件（同 family の支持重みが broad の own の何倍以上か）。 */
-export const BROAD_PROMOTION_SUPPORT_RATIO = 0.5;
+export const BROAD_PROMOTION_SUPPORT_RATIO = 0.3;
 /** broad から細分類への昇格条件（細分類の confidence が broad の何倍以上か）。 */
 export const BROAD_PROMOTION_CONFIDENCE_RATIO = 0.75;
 /** 昇格時に broad の重みを細分類へ移す比率（表示の矛盾を防ぐ）。 */
@@ -177,7 +185,7 @@ export function aggregateGenres(
         if (score.id === broadId) return false;
         const def = getGenre(score.id);
         if (!def || def.broad) return false;
-        const sameFamily = def.family === broadDef.family;
+        const sameFamily = sharesUmbrella(def.family, broadDef.family);
         const supportValue = support.get(score.id) ?? 0;
         return (
           (sameFamily && supportValue >= broadOwn * BROAD_PROMOTION_SUPPORT_RATIO) ||
@@ -186,8 +194,10 @@ export function aggregateGenres(
       });
 
       candidates.sort((a, b) => {
-        const aSame = getGenre(a.id)?.family === broadDef.family ? 1 : 0;
-        const bSame = getGenre(b.id)?.family === broadDef.family ? 1 : 0;
+        const aDef = getGenre(a.id);
+        const bDef = getGenre(b.id);
+        const aSame = aDef && sharesUmbrella(aDef.family, broadDef.family) ? 1 : 0;
+        const bSame = bDef && sharesUmbrella(bDef.family, broadDef.family) ? 1 : 0;
         if (aSame !== bSame) return bSame - aSame;
         const aSupport = support.get(a.id) ?? 0;
         const bSupport = support.get(b.id) ?? 0;
@@ -198,7 +208,9 @@ export function aggregateGenres(
       if (chosen) {
         const chosenDef = getGenre(chosen.id);
         const transferable = Boolean(
-          chosenDef && (chosenDef.family === broadDef.family || isDescendantOf(chosen.id, broadId)),
+          chosenDef &&
+            (sharesUmbrella(chosenDef.family, broadDef.family) ||
+              isDescendantOf(chosen.id, broadId)),
         );
         if (transferable) {
           // 傘の証拠は細分類にも整合するので、重みの半分を移して表示の矛盾を防ぐ
