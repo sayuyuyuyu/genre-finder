@@ -409,6 +409,43 @@ async function run() {
     check('error: 再試行ボタンが出る', (await errorPage.getByRole('button', { name: /再試行/ }).count()) === 1);
     await errorPage.screenshot({ path: join(artifacts, '15-error.png'), fullPage: true });
 
+    if (mode === 'mock') {
+      // ブラウザの戻るで検索結果に戻れる
+      const backPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(backPage);
+      await backPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await backPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await backPage.keyboard.press('Enter');
+      await backPage.waitForSelector('button.track');
+      await backPage.locator('button.track').first().click();
+      await backPage.waitForSelector('.verdict__arcade');
+      await backPage.goBack();
+      await backPage.waitForSelector('button.track', { timeout: 8000 });
+      check('history: 戻るで検索結果に戻れる', !backPage.url().includes('?t='), backPage.url());
+      await backPage.close();
+
+      // キーボードだけで検索できる
+      const kbPage = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+      await installMocks(kbPage);
+      await kbPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      let focused = false;
+      for (let i = 0; i < 12 && !focused; i += 1) {
+        await kbPage.keyboard.press('Tab');
+        focused = await kbPage.evaluate(
+          () => document.activeElement?.matches('input[type="text"]') ?? false,
+        );
+      }
+      check('a11y: Tabで検索欄に到達できる', focused);
+      if (focused) {
+        await kbPage.keyboard.type('Megalovania');
+        await kbPage.keyboard.press('Enter');
+        await kbPage.waitForSelector('button.track', { timeout: 8000 });
+        check('a11y: キーボードだけで検索できる', true);
+      }
+      await kbPage.screenshot({ path: join(artifacts, '16-keyboard.png'), fullPage: true });
+      await kbPage.close();
+    }
+
     check('コンソールエラーなし', errors.length === 0, errors.slice(0, 3).join(' / '));
   } finally {
     await browser.close();

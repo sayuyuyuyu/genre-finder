@@ -1045,3 +1045,20 @@ button.chip:hover {
   font-style: normal;
   letter-spacing: 0;
 }
+
+/* ロゴのレコードはホバーでゆっくり回る（動きを減らす設定では無効） */
+.brand__mark svg {
+  transition: transform 0.7s var(--ease);
+}
+
+.brand:hover .brand__mark svg {
+  transform: rotate(140deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand__mark svg,
+  .brand:hover .brand__mark svg {
+    transition: none;
+    transform: none;
+  }
+}

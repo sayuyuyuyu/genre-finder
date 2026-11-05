@@ -72,17 +72,30 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 判定した曲は URL で共有できるようにする
+  // popstate から最新の finder を参照するための ref
+  const finderRef = useRef(finder);
+  finderRef.current = finder;
+
+  // ブラウザの「戻る」で判定から検索結果に戻れるようにする
+  useEffect(() => {
+    function handlePopState() {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get('t')) finderRef.current.backToResults();
+    }
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // 判定した曲は URL で共有できるようにする（戻るで検索結果へ戻れるよう push する）
   useEffect(() => {
     if (phase === 'judgment' && judgment) {
-      window.history.replaceState(
-        null,
-        '',
-        sharedQueryString({
-          title: judgment.track.title,
-          artist: judgment.track.artist || undefined,
-        }),
-      );
+      const next = sharedQueryString({
+        title: judgment.track.title,
+        artist: judgment.track.artist || undefined,
+      });
+      if (window.location.search !== next) {
+        window.history.pushState({ view: 'judgment' }, '', next);
+      }
     } else if (phase === 'idle') {
       window.history.replaceState(null, '', window.location.pathname);
     }
