@@ -9,10 +9,12 @@ import ResultsView from '@/components/ResultsView';
 import SearchPanel from '@/components/SearchPanel';
 import SiteHeader from '@/components/SiteHeader';
 import { JudgmentSkeleton, ResultsSkeleton } from '@/components/Skeletons';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useGenreFinder } from '@/hooks/useGenreFinder';
 import { useRecent } from '@/hooks/useRecent';
+import { useShareUrl } from '@/hooks/useShareUrl';
 import { arcadeOf } from '@/lib/arcade';
-import { readSharedQuery, sharedQueryString } from '@/lib/shared-query';
+import { readSharedQuery } from '@/lib/shared-query';
 
 export default function App() {
   const finder = useGenreFinder();
@@ -36,17 +38,6 @@ export default function App() {
     });
     return () => window.cancelAnimationFrame(frame);
   }, [phase]);
-
-  useEffect(() => {
-    const base = 'これ何ジャンル？ — 音楽ジャンル判定';
-    if (phase === 'judgment' && judgment) {
-      document.title = `${judgment.track.title} のジャンル — これ何ジャンル？`;
-    } else if (phase === 'results' && tracks.length > 0) {
-      document.title = `検索結果 ${tracks.length}件 — これ何ジャンル？`;
-    } else {
-      document.title = base;
-    }
-  }, [phase, judgment, tracks.length]);
 
   // 判定が終わったら履歴に積む（同じ曲は1件にまとめる）
   useEffect(() => {
@@ -72,34 +63,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // popstate から最新の finder を参照するための ref
-  const finderRef = useRef(finder);
-  finderRef.current = finder;
-
-  // ブラウザの「戻る」で判定から検索結果に戻れるようにする
-  useEffect(() => {
-    function handlePopState() {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.get('t')) finderRef.current.backToResults();
-    }
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  // 判定した曲は URL で共有できるようにする（戻るで検索結果へ戻れるよう push する）
-  useEffect(() => {
-    if (phase === 'judgment' && judgment) {
-      const next = sharedQueryString({
-        title: judgment.track.title,
-        artist: judgment.track.artist || undefined,
-      });
-      if (window.location.search !== next) {
-        window.history.pushState({ view: 'judgment' }, '', next);
-      }
-    } else if (phase === 'idle') {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  }, [phase, judgment]);
+  // 判定URLの履歴管理（戻るで検索結果へ）とタブタイトル
+  useShareUrl(phase, judgment, finder.backToResults);
+  useDocumentTitle(phase, judgment, tracks.length);
 
   function handleSearch() {
     finder.search(input);

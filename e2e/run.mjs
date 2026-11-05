@@ -209,6 +209,7 @@ async function run() {
     if (mode === 'mock') {
       await page.waitForTimeout(250);
       check('skeleton: 判定中に出る', (await page.locator('.sk-line--arcade').count()) === 1);
+      check('skeleton: スキャン表示が出る', (await page.locator('.scan__lamp').count()) === 3);
       await page.screenshot({ path: join(artifacts, '08-skeleton-judgment.png'), fullPage: true });
     }
     await page.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
@@ -444,6 +445,37 @@ async function run() {
       }
       await kbPage.screenshot({ path: join(artifacts, '16-keyboard.png'), fullPage: true });
       await kbPage.close();
+    }
+
+    if (mode === 'mock') {
+      // 動きを減らす設定ではアニメーションしない
+      const reducedPage = await browser.newPage({
+        viewport: { width: 1440, height: 1000 },
+        reducedMotion: 'reduce',
+      });
+      await installMocks(reducedPage);
+      await reducedPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+      await reducedPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+      await reducedPage.keyboard.press('Enter');
+      await reducedPage.waitForSelector('button.track', { timeout: 8000 });
+      await reducedPage.locator('button.track').first().click();
+      await reducedPage.waitForSelector('.scan__lamp', { timeout: 8000 });
+      const reduced = await reducedPage.evaluate(() => {
+        const line = document.querySelector('.sk-line');
+        const after = line ? getComputedStyle(line, '::after') : null;
+        const lamp = document.querySelector('.scan__lamp');
+        const lampBefore = lamp ? getComputedStyle(lamp, '::before') : null;
+        return {
+          shimmer: after?.animationName ?? '',
+          lamp: lampBefore?.animationName ?? '',
+        };
+      });
+      check(
+        'a11y: 動きを減らす設定でアニメーション停止',
+        reduced.shimmer === 'none' && reduced.lamp === 'none',
+        JSON.stringify(reduced),
+      );
+      await reducedPage.close();
     }
 
     check('コンソールエラーなし', errors.length === 0, errors.slice(0, 3).join(' / '));

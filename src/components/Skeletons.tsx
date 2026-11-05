@@ -69,6 +69,14 @@ export function JudgmentSkeleton({ trackTitle, canGoBack, onBack }: JudgmentSkel
           <SkLine width="30%" />
         </div>
         <div className="sk-verdict">
+          <span className="scan">
+            <span className="micro">SCANNING</span>
+            {['iTunes', 'Deezer', 'MB'].map((source) => (
+              <span className="scan__lamp" key={source}>
+                {source}
+              </span>
+            ))}
+          </span>
           <span className="sk-line sk-line--micro" />
           <span className="sk-line sk-line--arcade" />
           <SkLine width="46%" />

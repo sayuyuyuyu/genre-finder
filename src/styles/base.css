@@ -1062,3 +1062,68 @@ button.chip:hover {
     transform: none;
   }
 }
+
+/* 判定中のスキャン表示（どの情報源を待っているかのイメージ） */
+.scan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  color: var(--cream-48);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.scan .micro {
+  font-size: 9px;
+}
+
+.scan__lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scan__lamp::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  opacity: 0.2;
+  animation: scan-pulse 1.5s var(--ease) infinite;
+}
+
+.scan__lamp:nth-child(3)::before {
+  animation-delay: 0.25s;
+}
+
+.scan__lamp:nth-child(4)::before {
+  animation-delay: 0.5s;
+}
+
+@keyframes scan-pulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(232, 176, 75, 0.7);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-line::after,
+  .sk-block::after {
+    animation: none;
+  }
+
+  .scan__lamp::before {
+    animation: none;
+    opacity: 0.5;
+  }
+}
