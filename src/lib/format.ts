@@ -1,18 +1,4 @@
-import type { ConfidenceLevel, TrackCandidate } from '@shared/types';
-
-export const CONFIDENCE_LABELS: Record<ConfidenceLevel, string> = {
-  high: '高',
-  medium: '中',
-  low: '低',
-  unknown: '判定不能',
-};
-
-export const CONFIDENCE_HINTS: Record<ConfidenceLevel, string> = {
-  high: '複数の情報源が同じジャンルを示しています。',
-  medium: '情報源はおおむね一致していますが、根拠は十分ではありません。',
-  low: '根拠が少ないため、参考程度に読んでください。',
-  unknown: 'ジャンルを特定できるだけの根拠が集まりませんでした。',
-};
+import type { TrackCandidate } from '@shared/types';
 
 export function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;

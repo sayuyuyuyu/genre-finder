@@ -28,13 +28,24 @@ function check(name, ok, detail = '') {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
 }
 
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function installMocks(page) {
   const search = fixture('search');
   const analyze = fixture('analyze');
   const resolve = fixture('resolve');
-  await page.route('**/api/search**', (route) => route.fulfill({ json: search }));
-  await page.route('**/api/analyze**', (route) => route.fulfill({ json: analyze }));
-  await page.route('**/api/resolve**', (route) => route.fulfill({ json: resolve }));
+  await page.route('**/api/search**', async (route) => {
+    await delay(1000);
+    await route.fulfill({ json: search });
+  });
+  await page.route('**/api/analyze**', async (route) => {
+    await delay(1400);
+    await route.fulfill({ json: analyze });
+  });
+  await page.route('**/api/resolve**', async (route) => {
+    await delay(300);
+    await route.fulfill({ json: resolve });
+  });
 }
 
 /** 画像の読み込みを待つ。間に合わなくてもスクショは撮る。 */
@@ -72,6 +83,11 @@ async function run() {
     // 検索 → 結果
     await page.locator('input[type="search"], input[type="text"]').first().fill('夜に駆ける YOASOBI');
     await page.keyboard.press('Enter');
+    if (mode === 'mock') {
+      await page.waitForTimeout(150);
+      check('skeleton: 検索中に出る', (await page.locator('.skeleton-rows').count()) === 1);
+      await page.screenshot({ path: join(artifacts, '09-skeleton-results.png'), fullPage: true });
+    }
     await page.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 25000 });
     await settleImages(page);
     const resultCount = await page.locator('button.track').count();
@@ -88,6 +104,11 @@ async function run() {
 
     // 判定
     await page.locator('button.track').first().click();
+    if (mode === 'mock') {
+      await page.waitForTimeout(250);
+      check('skeleton: 判定中に出る', (await page.locator('.sk-line--arcade').count()) === 1);
+      await page.screenshot({ path: join(artifacts, '08-skeleton-judgment.png'), fullPage: true });
+    }
     await page.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
     await settleImages(page);
     const arcade = (await page.locator('.verdict__arcade').innerText()).trim();
@@ -150,6 +171,20 @@ async function run() {
     await mobile.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
     await mobile.screenshot({ path: join(artifacts, '05-mobile-judgment.png'), fullPage: true });
     check('mobile: 横スクロールなし（判定）', await noHorizontalOverflow(mobile));
+
+    // 360px（最小幅）でも崩れないこと
+    const narrow = await browser.newPage({ viewport: { width: 360, height: 780 }, deviceScaleFactor: 2 });
+    if (mode === 'mock') await installMocks(narrow);
+    await narrow.goto(`${base}/`, { waitUntil: 'networkidle' });
+    check('360px: 横スクロールなし（idle）', await noHorizontalOverflow(narrow));
+    await narrow.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+    await narrow.keyboard.press('Enter');
+    await narrow.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 25000 });
+    check('360px: 横スクロールなし（結果）', await noHorizontalOverflow(narrow));
+    await narrow.locator('button.track').first().click();
+    await narrow.waitForSelector('.verdict__arcade', { timeout: mode === 'mock' ? 8000 : 40000 });
+    check('360px: 横スクロールなし（判定）', await noHorizontalOverflow(narrow));
+    await narrow.screenshot({ path: join(artifacts, '10-360-judgment.png'), fullPage: true });
 
     check('コンソールエラーなし', errors.length === 0, errors.slice(0, 3).join(' / '));
   } finally {

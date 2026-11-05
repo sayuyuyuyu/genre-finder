@@ -382,14 +382,6 @@
     display: block;
   }
 
-  .search__label {
-    display: block;
-    margin-top: 6px;
-  }
-
-  .search__label-sub {
-    display: block;
-  }
 
   .search__enter {
     display: none;
