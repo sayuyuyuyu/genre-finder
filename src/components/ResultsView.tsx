@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SOURCE_LABELS } from '@shared/types';
 import type { TrackCandidate } from '@shared/types';
 import TrackArtwork from '@/components/TrackArtwork';
+import { normalizeArtist, normalizeTitle } from '@shared/genre/normalize';
 import { displayQuery, formatDuration } from '@/lib/format';
 
 interface ResultsViewProps {
@@ -23,8 +24,25 @@ export default function ResultsView({
 }: ResultsViewProps) {
   // カバー・カラオケ版を隠せるようにする（既定は表示）
   const [showCovers, setShowCovers] = useState(true);
+  // Remix / Live などの同一アーティストの別バージョンを1行にまとめる（既定はまとめる）
+  const [mergeVersions, setMergeVersions] = useState(true);
   const coverCount = tracks.filter((track) => track.isCover).length;
   const visibleTracks = showCovers ? tracks : tracks.filter((track) => !track.isCover);
+
+  // 同じ曲名＋アーティストの別バージョンをグループ化（代表は一番スコアが高いもの）
+  const groups = new Map<string, { track: TrackCandidate; count: number }>();
+  for (const track of visibleTracks) {
+    const key = `${normalizeTitle(track.title)}|${normalizeArtist(track.artist)}`;
+    const existing = groups.get(key);
+    if (existing) existing.count += 1;
+    else groups.set(key, { track, count: 1 });
+  }
+  const groupedRows = [...groups.values()];
+  const hasVersions = groupedRows.some((group) => group.count > 1);
+  const rows = mergeVersions
+    ? groupedRows.map((group) => ({ track: group.track, versionCount: group.count }))
+    : visibleTracks.map((track) => ({ track, versionCount: 1 }));
+  const rowCount = rows.length;
 
   return (
     <section className="stage" aria-labelledby="results-title">
@@ -35,7 +53,7 @@ export default function ResultsView({
             「{displayQuery(queryLabel)}」
           </h2>
           <p className="stage__sub">
-            {visibleTracks.length > 0 ? `${visibleTracks.length} 曲 · 選ぶと判定` : '候補なし'}
+            {rowCount > 0 ? `${rowCount} 曲 · 選ぶと判定` : '候補なし'}
           </p>
         </div>
         <div className="stage__actions">
@@ -50,6 +68,17 @@ export default function ResultsView({
               COVERS {showCovers ? 'ON' : 'OFF'}
             </button>
           )}
+          {hasVersions && (
+            <button
+              type="button"
+              className={`btn btn--ghost btn--small${mergeVersions ? '' : ' is-active'}`}
+              onClick={() => setMergeVersions((value) => !value)}
+              aria-pressed={!mergeVersions}
+              title="Remix / Live などの別バージョンのまとめ表示を切り替える"
+            >
+              VERSIONS {mergeVersions ? 'MERGED' : 'ALL'}
+            </button>
+          )}
           <button type="button" className="btn btn--ghost btn--small" onClick={onReset}>
             別の曲を調べる
           </button>
@@ -62,7 +91,7 @@ export default function ResultsView({
         </p>
       )}
 
-      {visibleTracks.length === 0 ? (
+      {rowCount === 0 ? (
         <div className="empty">
           <div className="empty__art" aria-hidden="true">
             <span className="empty__disc" />
@@ -97,9 +126,15 @@ export default function ResultsView({
         </div>
       ) : (
         <ol className="results">
-          {visibleTracks.map((track, index) => (
-            <li key={track.id || `${track.source}-${track.sourceId}-${index}`}>
-              <TrackRow track={track} index={index} featured={index === 0} onSelect={onSelect} />
+          {rows.map((row, index) => (
+            <li key={row.track.id || `${row.track.source}-${row.track.sourceId}-${index}`}>
+              <TrackRow
+                track={row.track}
+                index={index}
+                featured={index === 0}
+                versionCount={row.versionCount}
+                onSelect={onSelect}
+              />
             </li>
           ))}
         </ol>
@@ -123,11 +158,13 @@ interface TrackRowProps {
   track: TrackCandidate;
   index: number;
   featured: boolean;
+  /** 同一曲の別バージョンを含めた数（2以上で +N を出す）。 */
+  versionCount?: number;
   onSelect: (track: TrackCandidate) => void;
 }
 
 /** IIDX の選曲リストのように、番号・ジャンル・時間を並べた1行。 */
-function TrackRow({ track, index, featured, onSelect }: TrackRowProps) {
+function TrackRow({ track, index, featured, versionCount = 1, onSelect }: TrackRowProps) {
   // 時間は右端に出すので、メタ情報はアルバムと年だけ
   const meta = [track.album, track.year ? String(track.year) : null]
     .filter((part): part is string => Boolean(part))
@@ -156,6 +193,7 @@ function TrackRow({ track, index, featured, onSelect }: TrackRowProps) {
       </span>
       <span className="track__genre">
         {genre && <span className="track__arcade">{genre}</span>}
+        {versionCount > 1 && <span className="track__versions">+{versionCount - 1} ver</span>}
         <span className="micro track__source">{SOURCE_LABELS[track.source]}</span>
       </span>
       {duration && <span className="track__time">{duration}</span>}

@@ -202,6 +202,19 @@ async function run() {
       await page.getByRole('button', { name: /COVERS OFF/ }).click();
       const restored = await page.locator('button.track').count();
       check('results: カバーを隠せる', before === 2 && after === 1 && restored === 2, `${before} → ${after} → ${restored}`);
+
+      // 別バージョン（Live 等）のまとめ表示
+      const merged = await page.locator('button.track').count();
+      const badge = await page.locator('.track__versions').count();
+      await page.getByRole('button', { name: /VERSIONS MERGED/ }).click();
+      const allVersions = await page.locator('button.track').count();
+      await page.getByRole('button', { name: /VERSIONS ALL/ }).click();
+      const mergedAgain = await page.locator('button.track').count();
+      check(
+        'results: 別バージョンをまとめられる',
+        merged === 2 && badge === 1 && allVersions === 3 && mergedAgain === 2,
+        `${merged}(${badge}) → ${allVersions} → ${mergedAgain}`,
+      );
     }
 
     // 判定
