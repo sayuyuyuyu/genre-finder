@@ -9,8 +9,22 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 /** 30秒試聴。円のリングが進捗になる。文言は最小限。 */
 export default function PreviewButton({ preview }: PreviewButtonProps) {
-  const { playing, progress, available, toggle } = preview;
+  const { playing, progress, available, failed, toggle } = preview;
   if (!available) return null;
+
+  if (failed) {
+    return (
+      <span className="preview preview--error" role="note" title="この曲の試聴は用意されていません">
+        <span className="preview__ring" aria-hidden="true">
+          <svg viewBox="0 0 30 30" width="30" height="30">
+            <circle className="preview__track" cx="15" cy="15" r={RADIUS} />
+            <path className="preview__cross" d="M11 11l8 8M19 11l-8 8" />
+          </svg>
+        </span>
+        <span className="preview__label">NO AUDIO</span>
+      </span>
+    );
+  }
 
   return (
     <button

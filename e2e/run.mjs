@@ -309,6 +309,33 @@ async function run() {
     check('360px: 横スクロールなし（判定）', await noHorizontalOverflow(narrow));
     await narrow.screenshot({ path: join(artifacts, '10-360-judgment.png'), fullPage: true });
 
+    // 空状態
+    const emptyPage = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1.5 });
+    await emptyPage.route('**/api/search**', (route) =>
+      route.fulfill({ json: { query: { title: 'zzzz' }, tracks: [], warnings: [] } }),
+    );
+    await emptyPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+    await emptyPage.locator('input[type="search"], input[type="text"]').first().fill('zzzz');
+    await emptyPage.keyboard.press('Enter');
+    await emptyPage.waitForSelector('.empty', { timeout: 10000 });
+    check('empty: ヒントがチップで出る', (await emptyPage.locator('.empty__chips .chip').count()) >= 3);
+    await emptyPage.screenshot({ path: join(artifacts, '14-empty.png'), fullPage: true });
+
+    // エラー状態
+    const errorPage = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1.5 });
+    if (mode === 'mock') await installMocks(errorPage);
+    await errorPage.route('**/api/analyze**', (route) =>
+      route.fulfill({ status: 500, json: { error: 'テスト用のエラー' } }),
+    );
+    await errorPage.goto(`${base}/`, { waitUntil: 'networkidle' });
+    await errorPage.locator('input[type="search"], input[type="text"]').first().fill('Megalovania');
+    await errorPage.keyboard.press('Enter');
+    await errorPage.waitForSelector('button.track', { timeout: mode === 'mock' ? 8000 : 25000 });
+    await errorPage.locator('button.track').first().click();
+    await errorPage.waitForSelector('.error-card', { timeout: 10000 });
+    check('error: 再試行ボタンが出る', (await errorPage.getByRole('button', { name: /再試行/ }).count()) === 1);
+    await errorPage.screenshot({ path: join(artifacts, '15-error.png'), fullPage: true });
+
     check('コンソールエラーなし', errors.length === 0, errors.slice(0, 3).join(' / '));
   } finally {
     await browser.close();

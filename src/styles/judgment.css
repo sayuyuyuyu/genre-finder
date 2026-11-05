@@ -688,3 +688,15 @@
   border-bottom-color: var(--line-amber);
   color: var(--amber-bright);
 }
+
+.preview--error {
+  cursor: default;
+  color: var(--cream-32);
+}
+
+.preview__cross {
+  stroke: var(--cream-32);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  fill: none;
+}

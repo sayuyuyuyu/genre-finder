@@ -45,20 +45,24 @@ export default function ResultsView({
 
       {tracks.length === 0 ? (
         <div className="empty">
-          <p className="micro">NO MATCH</p>
-          <h3 className="empty__title">曲が見つかりませんでした</h3>
-          <p className="empty__text">
-            表記を変えると見つかることがあります。アーティスト名を添える、英語表記（ローマ字）にする、リンクを貼る、などを試してください。
-          </p>
-          <ul className="empty__tips">
-            <li>「曲名 アーティスト」の順で入力する</li>
-            <li>「feat.」や記号を省いてみる</li>
-            <li>Spotify / YouTube の曲リンクを貼り付ける</li>
-          </ul>
-          <div className="empty__actions">
-            <button type="button" className="btn btn--primary" onClick={onReset}>
-              曲名を入れ直す
-            </button>
+          <div className="empty__art" aria-hidden="true">
+            <span className="empty__disc" />
+            <span className="empty__mark">?</span>
+          </div>
+          <div className="empty__body">
+            <p className="micro">NO MATCH</p>
+            <h3 className="empty__title">曲が見つかりません</h3>
+            <ul className="empty__chips" aria-label="検索のヒント">
+              <li className="chip">曲名 アーティスト</li>
+              <li className="chip">英語表記</li>
+              <li className="chip">Spotify / YouTube のリンク</li>
+              <li className="chip">音声ファイル</li>
+            </ul>
+            <div className="empty__actions">
+              <button type="button" className="btn btn--primary" onClick={onReset}>
+                曲名を入れ直す
+              </button>
+            </div>
           </div>
         </div>
       ) : (

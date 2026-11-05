@@ -4,6 +4,8 @@ export interface PreviewState {
   playing: boolean;
   progress: number;
   available: boolean;
+  /** 読み込み・再生に失敗した。 */
+  failed: boolean;
   toggle: () => void;
   stop: () => void;
 }
@@ -16,6 +18,7 @@ export function usePreview(url?: string): PreviewState {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [failed, setFailed] = useState(false);
 
   const stop = useCallback(() => {
     const audio = audioRef.current;
@@ -26,6 +29,7 @@ export function usePreview(url?: string): PreviewState {
     }
     setPlaying(false);
     setProgress(0);
+    setFailed(false);
   }, []);
 
   useEffect(() => {
@@ -35,7 +39,7 @@ export function usePreview(url?: string): PreviewState {
   useEffect(() => stop, [stop]);
 
   const toggle = useCallback(() => {
-    if (!url) return;
+    if (!url || failed) return;
     if (audioRef.current) {
       stop();
       return;
@@ -54,6 +58,7 @@ export function usePreview(url?: string): PreviewState {
     audio.addEventListener('error', () => {
       setPlaying(false);
       setProgress(0);
+      setFailed(true);
       audioRef.current = null;
     });
 
@@ -64,8 +69,9 @@ export function usePreview(url?: string): PreviewState {
       .catch(() => {
         audioRef.current = null;
         setPlaying(false);
+        setFailed(true);
       });
-  }, [url, stop]);
+  }, [url, failed, stop]);
 
-  return { playing, progress, available: Boolean(url), toggle, stop };
+  return { playing, progress, available: Boolean(url), failed, toggle, stop };
 }

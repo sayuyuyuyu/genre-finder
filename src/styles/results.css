@@ -216,11 +216,44 @@
 /* ------------------------------- empty state ------------------------------ */
 
 .empty {
+  display: grid;
+  grid-template-columns: 148px minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(22px, 3vw, 32px);
   margin-top: 24px;
-  padding: clamp(26px, 4vw, 40px);
+  padding: clamp(24px, 4vw, 36px);
   border: 1px solid var(--line);
   border-radius: var(--radius-m);
   background: rgba(27, 24, 21, 0.5);
+}
+
+.empty__art {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 148px;
+  aspect-ratio: 1 / 1;
+  place-items: center;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-m);
+}
+
+.empty__disc {
+  width: 64%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background:
+    repeating-radial-gradient(circle at 50% 50%, rgba(245, 239, 230, 0.07) 0 1px, transparent 1px 7px),
+    #17130f;
+  box-shadow: inset 0 0 0 1px rgba(245, 239, 230, 0.06);
+}
+
+.empty__mark {
+  position: absolute;
+  color: var(--cream-32);
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
 }
 
 .empty__title {
@@ -231,40 +264,18 @@
   line-height: 1.4;
 }
 
-.empty__text {
-  max-width: 560px;
-  margin-top: 12px;
-  color: var(--cream-64);
-  font-size: 13px;
-  line-height: 1.95;
-}
-
-.empty__tips {
+.empty__chips {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 18px;
-  color: var(--cream-48);
-  font-size: 12.5px;
-}
-
-.empty__tips li {
-  position: relative;
-  padding-left: 16px;
-}
-
-.empty__tips li::before {
-  content: '—';
-  position: absolute;
-  left: 0;
-  color: var(--cream-48);
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .empty__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 22px;
 }
 
 /* ------------------------------- responsive ------------------------------- */
@@ -320,4 +331,14 @@
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
+
+  .empty {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .empty__art {
+    width: 108px;
+    order: -1;
+  }
 }
