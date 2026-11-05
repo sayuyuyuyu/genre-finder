@@ -179,6 +179,17 @@ function toEvidence(
   };
 }
 
+/**
+ * iTunes に曲が見つかっている場合、表示中のトラックへ Apple Music の曲ページ URL を足す。
+ * 検索結果のソースが Deezer でも、実ページへ直接飛べるようにするため。
+ */
+function withItunesLink(track: TrackCandidate, itunes: ItunesTrack | null): TrackCandidate {
+  if (!itunes?.trackViewUrl) return track;
+  const links = { ...(track.links ?? {}) };
+  if (!links.itunes) links.itunes = itunes.trackViewUrl;
+  return { ...track, links };
+}
+
 function pickTrack(
   input: AnalyzeInput,
   itunes: ItunesTrack | null,
@@ -404,7 +415,10 @@ export async function analyzeTrack(input: AnalyzeInput, env?: Env): Promise<Anal
     .slice(0, 10);
 
   /* --------------------------------- 曲情報 --------------------------------- */
-  const track = pickTrack(input, itunes?.track ?? null, deezer, mb, title, artist);
+  const track = withItunesLink(
+    pickTrack(input, itunes?.track ?? null, deezer, mb, title, artist),
+    itunes?.track ?? null,
+  );
   if (!track.rawGenre) {
     track.rawGenre =
       primary?.labelEn ?? deezer?.genres[0] ?? itunes?.track?.primaryGenreName ?? undefined;

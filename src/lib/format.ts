@@ -46,16 +46,37 @@ export function trackMeta(track: TrackCandidate): string {
 export interface ExternalSearchLink {
   label: string;
   url: string;
+  /** 曲の実ページに直接開ける場合 true（検索ページではなく曲ページ）。 */
+  exact: boolean;
 }
 
-/** track.title + artist から各サービスの検索 URL を作る。 */
-export function externalSearchLinks(track: Pick<TrackCandidate, 'title' | 'artist'>): ExternalSearchLink[] {
+/**
+ * 各サービスで開く URL を作る。
+ * iTunes / Apple Music は実ページの URL が分かっているときはそれを優先し、
+ * 分からないときだけ検索ページにフォールバックする。
+ */
+export function externalSearchLinks(
+  track: Pick<TrackCandidate, 'title' | 'artist' | 'links'>,
+): ExternalSearchLink[] {
   const term = [track.title, track.artist].filter((value) => value && value.trim()).join(' ');
   const encoded = encodeURIComponent(term);
+  const appleMusic = track.links?.itunes;
   return [
-    { label: 'Apple Music', url: `https://music.apple.com/jp/search?term=${encoded}` },
-    { label: 'Spotify', url: `https://open.spotify.com/search/${encoded}` },
-    { label: 'YouTube', url: `https://www.youtube.com/results?search_query=${encoded}` },
+    {
+      label: 'Apple Music',
+      url: appleMusic ?? `https://music.apple.com/jp/search?term=${encoded}`,
+      exact: Boolean(appleMusic),
+    },
+    {
+      label: 'Spotify',
+      url: track.links?.spotify ?? `https://open.spotify.com/search/${encoded}`,
+      exact: Boolean(track.links?.spotify),
+    },
+    {
+      label: 'YouTube',
+      url: `https://www.youtube.com/results?search_query=${encoded}`,
+      exact: false,
+    },
   ];
 }
 

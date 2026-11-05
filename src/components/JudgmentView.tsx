@@ -62,7 +62,7 @@ export default function JudgmentView({
                 <span className="micro">SOURCE / {SOURCE_LABELS[track.source]}</span>
               </p>
             )}
-            <div className="ext-links" aria-label="外部サービスで検索">
+            <div className="ext-links" aria-label="外部サービスで開く">
               {links.map((link) => (
                 <a
                   key={link.label}
@@ -70,6 +70,7 @@ export default function JudgmentView({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={link.exact ? '曲のページを開く' : '検索結果を開く'}
                 >
                   {link.label}
                   <span aria-hidden="true">↗</span>
